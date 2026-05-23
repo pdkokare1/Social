@@ -136,7 +136,7 @@ window.generateLane = function(z) {
         laneObj.foamGroup = new THREE.Group();
         window.scene.add(laneObj.foamGroup);
 
-        laneObj.lilies = []; // Explicitly track interactive lilypad entities safely
+        laneObj.lilies = []; 
 
         let darkBand = biome === 'cyber' ? window.matGridNeonBlue : window.matWaterDark;
         for(let i = -60; i < 60; i += 8) {
@@ -153,7 +153,6 @@ window.generateLane = function(z) {
                 lily.position.set(i + (Math.random() * 3), -0.18, z + (Math.random() - 0.5) * 0.4);
                 laneObj.foamGroup.add(lily);
                 
-                // Expose lily objects for mechanical stepping interactions
                 laneObj.lilies.push({
                     mesh: lily,
                     initialY: -0.18,
