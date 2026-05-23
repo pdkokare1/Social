@@ -38,6 +38,9 @@ let jumpProgress = 0;
 let squishX = 1, squishY = 1, squishZ = 1;
 let currentMoveDX = 0, currentMoveDZ = 0;
 
+// Dynamic Modulated Camera Shaking Parameters
+let cameraShakeIntensity = 0;
+
 // Combo & Streak Tracking Configurations
 let lastForwardHopTime = 0;
 let forwardComboCount = 0;
@@ -405,6 +408,15 @@ function updateGameLogic(delta) {
         });
     }
 
+    // Camera Structural Shake Decay Interpolations
+    if (cameraShakeIntensity > 0) {
+        cameraShakeIntensity -= delta * 2.5;
+        let sx = (Math.random() - 0.5) * cameraShakeIntensity;
+        let sy = (Math.random() - 0.5) * cameraShakeIntensity;
+        container.style.transform = `translate(${sx * 15}px, ${sy * 15}px)`;
+        if (cameraShakeIntensity <= 0) container.style.transform = '';
+    }
+
     if (gameState !== 'PLAYING') return;
 
     const speedModifier = delta * 60;
@@ -537,6 +549,7 @@ function updateGameLogic(delta) {
 
                 if (playerGridZ === z && Math.abs(car.position.x - playerMesh.position.x) < 0.95) { 
                     window.playSynthSound('crash_sedan');
+                    cameraShakeIntensity = 0.35; // Apply directional crash shake
                     triggerDeath(0xff1133); 
                     return; 
                 }
@@ -557,6 +570,7 @@ function updateGameLogic(delta) {
                     window.playerGridX = playerGridX = Math.round(playerMesh.position.x + window.START_COL); targetPlayerX = playerMesh.position.x;
                     if (playerGridX < 0 || playerGridX >= window.COLS) { 
                         window.playSynthSound('splash');
+                        cameraShakeIntensity = 0.15;
                         triggerDeath(0x3399ff); 
                         return; 
                     }
@@ -566,6 +580,27 @@ function updateGameLogic(delta) {
                     window.logPool.push(log);
                     lane.logs.splice(i, 1);
                 }
+            }
+            
+            // Dynamic progressive sinking checks for stepping on standalone lilypads
+            if (lane.lilies && playerGridZ === z && !isJumping) {
+                lane.lilies.forEach(lily => {
+                    if (Math.abs((lily.mesh.position.x) - playerMesh.position.x) < 0.5) {
+                        ridingLog = true; // Safe step match
+                        lily.isStepped = true;
+                        lily.sinkProgress += delta * 0.85;
+                        lily.mesh.position.y = lily.initialY - (Math.min(lily.sinkProgress, 1.0) * 0.25);
+                        if (lily.sinkProgress >= 1.0) {
+                            ridingLog = false; // Submerged lily trigger death state
+                        }
+                    } else {
+                        lily.isStepped = false;
+                        if (lily.sinkProgress > 0) {
+                            lily.sinkProgress -= delta * 0.35;
+                            lily.mesh.position.y = lily.initialY - (Math.max(lily.sinkProgress, 0) * 0.25);
+                        }
+                    }
+                });
             }
             
             if (lane.foamGroup) {
@@ -578,6 +613,7 @@ function updateGameLogic(delta) {
             
             if (playerGridZ === z && !isJumping && !ridingLog) { 
                 window.playSynthSound('splash');
+                cameraShakeIntensity = 0.18;
                 triggerDeath(0x3399ff); 
                 return; 
             }
@@ -618,6 +654,7 @@ function updateGameLogic(delta) {
                 
                 if (playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
                     window.playSynthSound('crash_train');
+                    cameraShakeIntensity = 0.65; // Severe express train shake multiplier
                     triggerDeath(0xff0044); 
                     return; 
                 }
@@ -696,6 +733,7 @@ function startRunCycle() {
     playerMesh.position.set(0, 0, 0); camera.position.set(9, 10, 9);
     chickenCoreGroup.rotation.set(0, 0, 0);
     squishX = 1; squishY = 1; squishZ = 1;
+    cameraShakeIntensity = 0;
 
     forwardComboCount = 0; window.currentComboMultiplier = currentComboMultiplier = 1;
     comboBadge.classList.remove('active');
