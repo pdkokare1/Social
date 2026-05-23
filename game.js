@@ -284,11 +284,7 @@ function processInputQueue() {
     const { dx, dz } = inputBuffer;
     inputBuffer = null; 
 
-    // PERMANENT BARRIER FIX: Force absolute target whole-integer snapshots instantly
-    if (lanes[playerGridZ]?.type === 'river') {
-        window.playerGridX = playerGridX = Math.round(playerMesh.position.x + window.START_COL);
-    }
-
+    // FIXED INVISIBLE WALL BUG: Removed snapping line that was triggering artificial position blockades.
     const nextX = playerGridX + dx;
     const nextZ = playerGridZ + dz;
 
@@ -549,7 +545,7 @@ function updateGameLogic(delta) {
 
                 if (playerGridZ === z && Math.abs(car.position.x - playerMesh.position.x) < 0.95) { 
                     window.playSynthSound('crash_sedan');
-                    cameraShakeIntensity = 0.35; // Apply directional crash shake
+                    cameraShakeIntensity = 0.35; 
                     triggerDeath(0xff1133); 
                     return; 
                 }
@@ -586,12 +582,12 @@ function updateGameLogic(delta) {
             if (lane.lilies && playerGridZ === z && !isJumping) {
                 lane.lilies.forEach(lily => {
                     if (Math.abs((lily.mesh.position.x) - playerMesh.position.x) < 0.5) {
-                        ridingLog = true; // Safe step match
+                        ridingLog = true; 
                         lily.isStepped = true;
                         lily.sinkProgress += delta * 0.85;
                         lily.mesh.position.y = lily.initialY - (Math.min(lily.sinkProgress, 1.0) * 0.25);
                         if (lily.sinkProgress >= 1.0) {
-                            ridingLog = false; // Submerged lily trigger death state
+                            ridingLog = false; 
                         }
                     } else {
                         lily.isStepped = false;
@@ -654,7 +650,7 @@ function updateGameLogic(delta) {
                 
                 if (playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
                     window.playSynthSound('crash_train');
-                    cameraShakeIntensity = 0.65; // Severe express train shake multiplier
+                    cameraShakeIntensity = 0.65; 
                     triggerDeath(0xff0044); 
                     return; 
                 }
