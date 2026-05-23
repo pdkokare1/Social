@@ -34,8 +34,10 @@ window.playSynthSound = function(type) {
             osc.stop(now + 0.12);
         } else if (type === 'score') {
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, now); 
-            osc.frequency.setValueAtTime(880, now + 0.06);   
+            // Progressive pitch architecture scales frequency up dynamically based on current streak tiers
+            let comboBonus = ((window.currentComboMultiplier || 1) - 1) * 45;
+            osc.frequency.setValueAtTime(587.33 + comboBonus, now); 
+            osc.frequency.setValueAtTime(880 + comboBonus, now + 0.06);   
             gainNode.gain.setValueAtTime(0.08, now);
             gainNode.gain.linearRampToValueAtTime(0.01, now + 0.2);
             osc.start(now);
