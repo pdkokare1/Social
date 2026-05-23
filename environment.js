@@ -48,6 +48,9 @@ window.matWinPool = new THREE.MeshBasicMaterial({ color: 0x222b35 });
 window.matWinFrontPool = new THREE.MeshBasicMaterial({ color: 0xccf5ff });
 window.matParticleBase = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 });
 
+// Neon Projection Volumetric Visual Presets
+window.matHeadlightCone = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.15, flatShading: true });
+
 // Memory Optimization Pools
 window.vehiclePool = [];
 window.logPool = [];
@@ -133,6 +136,8 @@ window.generateLane = function(z) {
         laneObj.foamGroup = new THREE.Group();
         window.scene.add(laneObj.foamGroup);
 
+        laneObj.lilies = []; // Explicitly track interactive lilypad entities safely
+
         let darkBand = biome === 'cyber' ? window.matGridNeonBlue : window.matWaterDark;
         for(let i = -60; i < 60; i += 8) {
             const band = new THREE.Mesh(window.boxGeo, darkBand);
@@ -147,6 +152,14 @@ window.generateLane = function(z) {
                 lily.scale.set(0.4, 0.02, 0.4);
                 lily.position.set(i + (Math.random() * 3), -0.18, z + (Math.random() - 0.5) * 0.4);
                 laneObj.foamGroup.add(lily);
+                
+                // Expose lily objects for mechanical stepping interactions
+                laneObj.lilies.push({
+                    mesh: lily,
+                    initialY: -0.18,
+                    sinkProgress: 0,
+                    isStepped: false
+                });
             }
         }
 
@@ -359,6 +372,14 @@ window.createHighDetailVehicle = function(profile, direction) {
     if(profile === 'truck') hlL.position.x = direction > 0 ? 1.16 : -1.16;
     const hlR = hlL.clone(); hlR.position.z = -0.24;
     vehicle.add(hlL, hlR);
+
+    // Volumetric Dynamic Headlight Rays during evening/dusk gameplay
+    if (window.maxRowReached >= 40) {
+        const rayCone = new THREE.Mesh(window.boxGeo, window.matHeadlightCone);
+        rayCone.scale.set(2.4, 0.02, 0.65);
+        rayCone.position.set(direction > 0 ? hlL.position.x + 1.2 : hlL.position.x - 1.2, 0.32, 0);
+        vehicle.add(rayCone);
+    }
 
     const brakeL = new THREE.Mesh(window.boxGeo, window.matSignalTail); brakeL.scale.set(0.04, 0.08, 0.14);
     brakeL.position.set(direction > 0 ? -0.71 : 0.71, 0.34, 0.26);
