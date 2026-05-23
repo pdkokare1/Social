@@ -26,6 +26,7 @@ body {
     background: #000;
     border-radius: 20px;
     overflow: hidden;
+    transition: transform 0.05s linear; /* Smooth dynamic structural shake translations */
 }
 canvas {
     display: block;
@@ -88,6 +89,11 @@ canvas {
 #comboBadge.active {
     opacity: 1;
     transform: scale(1);
+    animation: pulseCombo 0.4s infinite alternate ease-in-out;
+}
+@keyframes pulseCombo {
+    0% { transform: scale(1); text-shadow: 0 0 4px #ffcc00; }
+    100% { transform: scale(1.08); text-shadow: 0 0 12px #ffaa00; }
 }
 .floating-indicator {
     position: absolute;
