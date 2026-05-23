@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voxel Hopper - Ultimate Performance</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <canvas id="threeCanvas"></canvas>
+        
+        <div id="uiOverlay">
+            <div class="hud-row">
+                <div id="scoreDisplay">00</div>
+                <div id="highScoreLabel">BEST: 00</div>
+            </div>
+            <div id="comboBadge">COMBO X2</div>
+            <div class="touch-hint hint-top">▲</div>
+            <div class="touch-hint hint-bottom">▼</div>
+            <div class="touch-hint hint-left">◀</div>
+            <div class="touch-hint hint-right">▶</div>
+        </div>
+
+        <button id="audioToggle" title="Toggle Sound">🔊</button>
+
+        <div id="startScreen" class="screen-overlay">
+            <h1>VOXEL HOPPER</h1>
+            <p>Freely explore in all 4 directions infinitely. Tap top/bottom areas to jump forward/backward, and left/right screen zones to step sideways.</p>
+            
+            <div class="skin-selector-title">Select Variant</div>
+            <div class="skin-container" id="skinContainer"></div>
+
+            <button id="startButton">Initialize Run</button>
+        </div>
+
+        <div id="gameOverScreen" class="screen-overlay hidden">
+            <div id="newRecordBadge">NEW HIGH SCORE!</div>
+            <h1 style="color: #ff4d4d;">GRID COLLISION</h1>
+            <p id="finalStats">Lanes Crossed: 00 | All-Time Best: 00</p>
+            <button id="restartButton">Try Again</button>
+        </div>
+    </div>
+
+    <script src="environment.js"></script>
+    <script src="audio.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+body {
+    background-color: #111216;
+    color: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
+#gameContainer {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    height: 100%;
+    max-height: 800px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    background: #000;
+    border-radius: 20px;
+    overflow: hidden;
+}
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+#uiOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 30px;
+}
+.hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+#scoreDisplay {
+    font-size: 52px;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    font-variant-numeric: tabular-nums;
+    transition: transform 0.1s ease, color 0.2s;
+}
+#highScoreLabel {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(0,0,0,0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+#comboBadge {
+    position: absolute;
+    top: 110px;
+    left: 30px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #ffcc00;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 12px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#comboBadge.active {
+    opacity: 1;
+    transform: scale(1);
+}
+.floating-indicator {
+    position: absolute;
+    font-weight: 900;
+    font-size: 24px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+    z-index: 5;
+    animation: floatUpAndFade 0.6s ease-out forwards;
+}
+@keyframes floatUpAndFade {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    30% { transform: translate(-50%, -100%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -180%) scale(0.8); opacity: 0; }
+}
+.touch-hint {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.06);
+    font-size: 28px;
+    font-weight: 900;
+    text-shadow: none;
+    pointer-events: none;
+}
+.hint-top { top: 15%; left: 50%; transform: translateX(-50%); }
+.hint-bottom { bottom: 15%; left: 50%; transform: translateX(-50%); }
+.hint-left { left: 10%; top: 50%; transform: translateY(-50%); }
+.hint-right { right: 10%; top: 50%; transform: translateY(-50%); }
+
+.screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(17, 18, 22, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    z-index: 10;
+    padding: 30px;
+    transition: opacity 0.2s ease;
+}
+.screen-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+h1 {
+    font-size: 38px;
+    margin-bottom: 8px;
+    color: #ffcc00;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 900;
+}
+p {
+    font-size: 15px;
+    color: #727682;
+    margin-bottom: 24px;
+    text-align: center;
+    max-width: 85%;
+    line-height: 1.6;
+}
+.skin-selector-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+.skin-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    pointer-events: auto;
+}
+.skin-card {
+    width: 76px;
+    height: 76px;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+.skin-card.selected {
+    border-color: #ffcc00;
+    background: rgba(255, 204, 0, 0.1);
+}
+.skin-card.locked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.skin-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+.skin-name {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: rgba(255,255,255,0.8);
+}
+.skin-card.selected .skin-name {
+    color: #ffcc00;
+}
+.skin-lock-hint {
+    position: absolute;
+    bottom: -18px;
+    font-size: 9px;
+    font-weight: 600;
+    color: #ff4d4d;
+    white-space: nowrap;
+}
+button {
+    background: linear-gradient(135deg, #ffcc00, #ffaa00);
+    color: #111216;
+    border: none;
+    padding: 18px 55px;
+    font-size: 16px;
+    font-weight: 800;
+    border-radius: 30px;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 8px 25px rgba(255, 170, 0, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: transform 0.1s;
+}
+button:active {
+    transform: scale(0.96);
+}
+#newRecordBadge {
+    color: #00ff66;
+    font-weight: 900;
+    font-size: 16px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: none;
+}
+#audioToggle {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 15;
+    pointer-events: auto;
+    box-shadow: none;
+    padding: 0;
+}
