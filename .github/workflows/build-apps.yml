@@ -17,8 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: package.json
+          # Cache config removed to prevent step interruption when a package-lock.json is not present
           
       - name: Initialize Dummy NPM Package
         run: |
@@ -28,6 +27,9 @@ jobs:
 
       - name: Install Capacitor Core Dependencies
         run: npm install
+
+      - name: Initialize Capacitor Configuration Shell
+        run: npx cap init "Voxel Hopper" "com.thegamut.voxelhopper" --web-dir=.
 
       - name: Initialize Native Android Platform Wrapper
         run: |
