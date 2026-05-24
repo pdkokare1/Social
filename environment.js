@@ -5,51 +5,56 @@ window.START_COL = 10000;
 // Shared Geometry
 window.boxGeo = new THREE.BoxGeometry(1, 1, 1);
 
-// Core visual style profiles
-window.matGrass = new THREE.MeshLambertMaterial({ color: 0x4fa642, flatShading: true });
-window.matGrassDark = new THREE.MeshLambertMaterial({ color: 0x438f38, flatShading: true });
-window.matFlowerRed = new THREE.MeshLambertMaterial({ color: 0xe23b3b, flatShading: true });
-window.matFlowerYellow = new THREE.MeshLambertMaterial({ color: 0xeed23b, flatShading: true });
-window.matRoad = new THREE.MeshLambertMaterial({ color: 0x282a30, flatShading: true });
-window.matWater = new THREE.MeshStandardMaterial({ color: 0x1d5ec2, roughness: 0.15, flatShading: true, transparent: true, opacity: 0.88 });
-window.matWaterDark = new THREE.MeshStandardMaterial({ color: 0x164ba1, roughness: 0.15, flatShading: true, transparent: true, opacity: 0.88 });
-window.matLily = new THREE.MeshLambertMaterial({ color: 0x298a4e, flatShading: true });
-window.matTreeLeaves = new THREE.MeshLambertMaterial({ color: 0x1b612c, flatShading: true });
-window.matTreeLeavesLight = new THREE.MeshLambertMaterial({ color: 0x247c3a, flatShading: true });
-window.matTrunk = new THREE.MeshLambertMaterial({ color: 0x452815, flatShading: true });
-window.matLog = new THREE.MeshLambertMaterial({ color: 0x61391e, flatShading: true });
-window.matRock = new THREE.MeshLambertMaterial({ color: 0x7c8491, flatShading: true });
-window.matRockDark = new THREE.MeshLambertMaterial({ color: 0x5d636e, flatShading: true });
+/* GRAPHICS ENGINE UPGRADE: Converted from basic flat MeshLambert to physically responsive MeshStandardMaterial blocks */
+window.matGrass = new THREE.MeshStandardMaterial({ color: 0x4fa642, roughness: 0.6, metalness: 0.1, flatShading: true });
+window.matGrassDark = new THREE.MeshStandardMaterial({ color: 0x438f38, roughness: 0.6, metalness: 0.1, flatShading: true });
+window.matFlowerRed = new THREE.MeshStandardMaterial({ color: 0xe23b3b, roughness: 0.7, flatShading: true });
+window.matFlowerYellow = new THREE.MeshStandardMaterial({ color: 0xeed23b, roughness: 0.7, flatShading: true });
+window.matRoad = new THREE.MeshStandardMaterial({ color: 0x282a30, roughness: 0.85, metalness: 0.2, flatShading: true });
+window.matWater = new THREE.MeshStandardMaterial({ color: 0x1d5ec2, roughness: 0.15, metalness: 0.4, flatShading: true, transparent: true, opacity: 0.88 });
+window.matWaterDark = new THREE.MeshStandardMaterial({ color: 0x164ba1, roughness: 0.15, metalness: 0.4, flatShading: true, transparent: true, opacity: 0.88 });
+window.matLily = new THREE.MeshStandardMaterial({ color: 0x298a4e, roughness: 0.6, flatShading: true });
+window.matTreeLeaves = new THREE.MeshStandardMaterial({ color: 0x1b612c, roughness: 0.65, flatShading: true });
+window.matTreeLeavesLight = new THREE.MeshStandardMaterial({ color: 0x247c3a, roughness: 0.65, flatShading: true });
+window.matTrunk = new THREE.MeshStandardMaterial({ color: 0x452815, roughness: 0.9, flatShading: true });
+window.matLog = new THREE.MeshStandardMaterial({ color: 0x61391e, roughness: 0.85, flatShading: true });
+window.matRock = new THREE.MeshStandardMaterial({ color: 0x7c8491, roughness: 0.8, metalness: 0.2, flatShading: true });
+window.matRockDark = new THREE.MeshStandardMaterial({ color: 0x5d636e, roughness: 0.8, metalness: 0.2, flatShading: true });
 window.matWhiteMarking = new THREE.MeshBasicMaterial({ color: 0xccd1db });
-window.matRailSteel = new THREE.MeshLambertMaterial({ color: 0x7e8694, flatShading: true });
-window.matRailTie = new THREE.MeshLambertMaterial({ color: 0x362013, flatShading: true });
+window.matRailSteel = new THREE.MeshStandardMaterial({ color: 0x7e8694, roughness: 0.2, metalness: 0.8, flatShading: true });
+window.matRailTie = new THREE.MeshStandardMaterial({ color: 0x362013, roughness: 0.9, flatShading: true });
 window.matSignalRed = new THREE.MeshBasicMaterial({ color: 0xff0833 });
 window.matSignalOff = new THREE.MeshBasicMaterial({ color: 0x1f0508 });
 window.matSignalGreen = new THREE.MeshBasicMaterial({ color: 0x113311 });
 window.matSignalTail = new THREE.MeshBasicMaterial({ color: 0xff3344 });
-window.matIronDark = new THREE.MeshLambertMaterial({ color: 0x444852, flatShading: true });
+window.matIronDark = new THREE.MeshStandardMaterial({ color: 0x444852, roughness: 0.5, metalness: 0.5, flatShading: true });
 
 // Biome Specific Procedural Material Profiles
-window.matDesertSand = new THREE.MeshLambertMaterial({ color: 0xdfd3a2, flatShading: true });
-window.matCactusBody = new THREE.MeshLambertMaterial({ color: 0x376e31, flatShading: true });
-window.matDesertShrub = new THREE.MeshLambertMaterial({ color: 0x8a8463, flatShading: true });
-window.matGridFloor = new THREE.MeshLambertMaterial({ color: 0x1a1b20, flatShading: true });
+window.matDesertSand = new THREE.MeshStandardMaterial({ color: 0xdfd3a2, roughness: 0.9, metalness: 0.05, flatShading: true });
+window.matCactusBody = new THREE.MeshStandardMaterial({ color: 0x376e31, roughness: 0.7, flatShading: true });
+window.matDesertShrub = new THREE.MeshStandardMaterial({ color: 0x8a8463, roughness: 0.8, flatShading: true });
+window.matGridFloor = new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.4, metalness: 0.3, flatShading: true });
 window.matGridMonolith = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.2, metalness: 0.8, flatShading: true });
 window.matGridNeonBlue = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
 window.matGridNeonPink = new THREE.MeshBasicMaterial({ color: 0xff0055 });
 
 // Shared optimization material cache parameters
 window.matGlassPool = new THREE.MeshStandardMaterial({ color: 0xb3f0ff, roughness: 0.05, transparent: true, opacity: 0.8, flatShading: true });
-window.matWheelPool = new THREE.MeshLambertMaterial({ color: 0x111215, flatShading: true });
+window.matWheelPool = new THREE.MeshStandardMaterial({ color: 0x111215, roughness: 0.8, flatShading: true });
 window.matGlowPool = new THREE.MeshBasicMaterial({ color: 0xfffde0 });
-window.matEnginePool = new THREE.MeshLambertMaterial({ color: 0xc42533, flatShading: true });
-window.matCoachPool = new THREE.MeshLambertMaterial({ color: 0xd9e1e8, flatShading: true });
+window.matEnginePool = new THREE.MeshStandardMaterial({ color: 0xc42533, roughness: 0.4, metalness: 0.2, flatShading: true });
+window.matCoachPool = new THREE.MeshStandardMaterial({ color: 0xd9e1e8, roughness: 0.4, metalness: 0.3, flatShading: true });
 window.matWinPool = new THREE.MeshBasicMaterial({ color: 0x222b35 });
 window.matWinFrontPool = new THREE.MeshBasicMaterial({ color: 0xccf5ff });
 window.matParticleBase = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 });
 
 // Neon Projection Volumetric Visual Presets
 window.matHeadlightCone = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.15, flatShading: true });
+
+// Polish Addition: Dynamic material handles to track procedural swaying structures
+window.swayingTrees = [];
+window.tumbleweeds = [];
+window.matTumbleweed = new THREE.MeshStandardMaterial({ color: 0xbc9d6c, roughness: 0.95, flatShading: true });
 
 // Memory Optimization Pools
 window.vehiclePool = [];
@@ -77,6 +82,34 @@ window.spawnFloatingIndicator = function(textStr, colorHexStr) {
     setTimeout(() => { tempDiv.remove(); }, 600);
 };
 
+// Polish Addition: Global loop updating natural swaying vegetation and rolling tumbleweeds
+window.updateEnvironmentAnimations = function(delta, time) {
+    // Math loop waving high detail tree leaf segments seamlessly
+    window.swayingTrees.forEach(leafMesh => {
+        if (leafMesh && leafMesh.parent) {
+            leafMesh.rotation.z = Math.sin(time * 2.2 + leafMesh.position.x) * 0.03;
+            leafMesh.rotation.x = Math.cos(time * 1.8 + leafMesh.position.y) * 0.02;
+        }
+    });
+
+    // Animate rolling tumbleweeds down sand channels
+    for (let i = window.tumbleweeds.length - 1; i >= 0; i--) {
+        const tw = window.tumbleweeds[i];
+        if (tw && tw.mesh && tw.mesh.parent) {
+            tw.mesh.position.x += tw.speed * delta * 60;
+            tw.mesh.rotation.z -= (tw.speed * 1.5) * (delta * 60);
+            tw.mesh.position.y = 0.15 + Math.abs(Math.sin(time * 5 + tw.mesh.position.x)) * 0.2;
+            
+            if (Math.abs(tw.mesh.position.x - (window.playerMesh ? window.playerMesh.position.x : 0)) > 25) {
+                window.scene.remove(tw.mesh);
+                window.tumbleweeds.splice(i, 1);
+            }
+        } else {
+            window.tumbleweeds.splice(i, 1);
+        }
+    }
+};
+
 window.generateLane = function(z) {
     if (window.lanes[z]) return;
 
@@ -101,7 +134,7 @@ window.generateLane = function(z) {
 
     if (rand < 0.42) {
         laneObj.type = 'road';
-        laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'cyber' ? new THREE.MeshLambertMaterial({color:0x111215}) : window.matRoad);
+        laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'cyber' ? new THREE.MeshStandardMaterial({color:0x111215, roughness:0.5}) : window.matRoad);
         laneObj.mesh.scale.set(window.COLS * 3, 1, 1);
         laneObj.mesh.position.set(0, -0.5, z);
         laneObj.mesh.receiveShadow = true;
@@ -203,7 +236,7 @@ window.generateLane = function(z) {
         const rail2 = rail1.clone(); rail2.position.z = z + 0.25;
         laneObj.visualGroup.add(rail1, rail2);
 
-        laneObj.signalPost = new THREE.Mesh(window.boxGeo, new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        laneObj.signalPost = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 }));
         laneObj.signalPost.scale.set(0.18, 1.4, 0.18);
         laneObj.signalPost.position.set(5, 0.6, z);
         window.scene.add(laneObj.signalPost);
@@ -213,7 +246,7 @@ window.generateLane = function(z) {
         laneObj.signalLight.position.set(5, 1.1, z + 0.12);
         window.scene.add(laneObj.signalLight);
 
-        laneObj.gateArm = new THREE.Mesh(window.boxGeo, new THREE.MeshLambertMaterial({ color: 0xdd2222 }));
+        laneObj.gateArm = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: 0xdd2222, roughness: 0.6 }));
         laneObj.gateArm.scale.set(1.8, 0.08, 0.08);
         laneObj.gateArm.position.set(4.2, 0.6, z + 0.3);
         window.scene.add(laneObj.gateArm);
@@ -232,6 +265,15 @@ window.generateLane = function(z) {
 
     if (laneObj.type === 'grass') {
         window.ensureObstaclesGeneratedForRange(laneObj, z, window.playerGridX - 35, window.playerGridX + 35);
+    }
+
+    // Polish Addition: Ambiently roll tumbleweed particles down newly formed sand biomes
+    if (biome === 'desert' && Math.random() < 0.25) {
+        const twMesh = new THREE.Mesh(window.boxGeo, window.matTumbleweed);
+        twMesh.scale.set(0.25, 0.25, 0.25);
+        twMesh.position.set(window.playerMesh ? window.playerMesh.position.x - 18 : -18, 0.15, z);
+        window.scene.add(twMesh);
+        window.tumbleweeds.push({ mesh: twMesh, speed: 0.06 + Math.random() * 0.08 });
     }
 
     window.lanes[z] = laneObj;
@@ -276,6 +318,10 @@ window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
                 const leavesB = new THREE.Mesh(window.boxGeo, leafMat); leavesB.scale.set(0.85, 0.6, 0.85); leavesB.position.y = 0.8; leavesB.castShadow = true; tree.add(leavesB);
                 const leavesM = new THREE.Mesh(window.boxGeo, leafMat); leavesM.scale.set(0.65, 0.5, 0.65); leavesM.position.y = 1.3; leavesM.castShadow = true; tree.add(leavesM);
                 const leavesT = new THREE.Mesh(window.boxGeo, leafMat); leavesT.scale.set(0.45, 0.45, 0.45); leavesT.position.y = 1.7; leavesT.castShadow = true; tree.add(leavesT);
+                
+                // Polish Addition: Tag leaf segments into the environmental wind simulator matrix
+                window.swayingTrees.push(leavesB, leavesM, leavesT);
+
                 tree.position.x = (c - window.START_COL);
                 lane.visualGroup.add(tree);
             }
@@ -308,7 +354,7 @@ window.createHighDetailVehicle = function(profile, direction) {
         const cargoColor = new THREE.Color().setHSL(Math.random(), 0.12, 0.8); 
         const cabColor = new THREE.Color().setHSL(Math.random(), 0.8, 0.4);
         
-        const cab = new THREE.Mesh(window.boxGeo, new THREE.MeshLambertMaterial({ color: cabColor, flatShading: true }));
+        const cab = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: cabColor, roughness: 0.4, flatShading: true }));
         cab.scale.set(0.7, 0.9, 0.76); cab.position.set(direction > 0 ? 0.8 : -0.8, 0.48, 0);
         cab.castShadow = true; vehicle.add(cab);
 
@@ -320,7 +366,7 @@ window.createHighDetailVehicle = function(profile, direction) {
         windshield.scale.set(0.04, 0.28, 0.66); windshield.position.set(direction > 0 ? 1.15 : -1.15, 0.68, 0);
         vehicle.add(windshield);
 
-        const containerBox = new THREE.Mesh(window.boxGeo, new THREE.MeshLambertMaterial({ color: cargoColor, flatShading: true }));
+        const containerBox = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: cargoColor, roughness: 0.5, flatShading: true }));
         containerBox.scale.set(1.6, 1.2, 0.86); containerBox.position.set(direction > 0 ? -0.35 : 0.35, 0.66, 0);
         containerBox.castShadow = true; vehicle.add(containerBox);
 
@@ -342,7 +388,7 @@ window.createHighDetailVehicle = function(profile, direction) {
         vehicle.add(w1, w2, w3, w4, w5, w6, w7, w8);
     } else {
         const bodyColor = new THREE.Color().setHSL(Math.random(), 0.85, 0.48);
-        const matBody = new THREE.MeshLambertMaterial({ color: bodyColor, flatShading: true });
+        const matBody = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.3, metalness: 0.1, flatShading: true });
         
         const baseBody = new THREE.Mesh(window.boxGeo, matBody);
         baseBody.scale.set(1.4, 0.4, 0.8); baseBody.position.y = 0.26; baseBody.castShadow = true; vehicle.add(baseBody);
