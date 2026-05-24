@@ -300,9 +300,8 @@ function processInputQueue() {
     updateActiveViewportLanes(nextZ);
     
     const targetLane = lanes[nextZ];
-    if (targetLane && targetLane.type === 'grass') {
-        window.ensureObstaclesGeneratedForRange(targetLane, nextZ, nextX - 10, nextX + 10);
-        if (targetLane.obstacles && targetLane.obstacles[nextX] === true) return;
+    if (targetLane && targetLane.obstacles) {
+        if (targetLane.obstacles[nextX] === true) return;
     }
 
     window.playerGridX = playerGridX = nextX; 
@@ -394,7 +393,8 @@ function updateActiveViewportLanes(centerZ) {
         if (!lanes[z]) {
             window.generateLane(z);
         } else if (lanes[z].type === 'grass') {
-            window.ensureObstaclesGeneratedForRange(lanes[z], z, playerGridX - 35, playerGridX + 35);
+            // Broad procedural lookahead sweep prevents invisible walls during lateral traversal
+            window.ensureObstaclesGeneratedForRange(lanes[z], z, playerGridX - 150, playerGridX + 150);
         }
     }
 
