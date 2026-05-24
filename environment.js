@@ -91,7 +91,6 @@ window.spawnFloatingIndicator = function(textStr, colorHexStr) {
     tempDiv.innerText = textStr;
     tempDiv.style.color = colorHexStr;
     
-    // Standard center screen coordinates mapping
     tempDiv.style.left = '50%';
     tempDiv.style.top = '45%';
     
@@ -189,7 +188,6 @@ window.generateLane = function(z) {
         let lineMat = biome === 'cyber' ? window.matGridNeonPink : window.matWhiteMarking;
         for (let i = -60; i < 60; i += 4) {
             const mark = new THREE.Mesh(window.boxGeo, lineMat);
-            // Height micro-offset elevated to completely resolve low precision mobile layout Z-fighting
             mark.scale.set(0.5, 0.02, 0.06);
             mark.position.set(i, 0.03, z);
             laneObj.markingGroup.add(mark);
@@ -215,7 +213,6 @@ window.generateLane = function(z) {
         for(let i = -60; i < 60; i += 8) {
             const band = new THREE.Mesh(window.boxGeo, darkBand);
             band.scale.set(4.0, 0.02, biome === 'cyber' ? 0.05 : 1.002);
-            // Raised to prevent immersion overlapping artifacts
             band.position.set(i + (Math.random() * 2), biome === 'cyber' ? 0.03 : -0.05, z);
             laneObj.foamGroup.add(band);
         }
@@ -224,7 +221,6 @@ window.generateLane = function(z) {
             if(Math.random() > 0.4 && biome !== 'cyber') {
                 const lily = new THREE.Mesh(window.boxGeo, window.matLily);
                 lily.scale.set(0.4, 0.02, 0.4);
-                // Elevated surface tracking
                 lily.position.set(i + (Math.random() * 3), -0.04, z + (Math.random() - 0.5) * 0.4);
                 laneObj.foamGroup.add(lily);
                 
