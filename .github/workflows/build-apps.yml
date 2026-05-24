@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Cache config removed to prevent step interruption when a package-lock.json is not present
           
       - name: Initialize Dummy NPM Package
         run: |
@@ -28,8 +27,18 @@ jobs:
       - name: Install Capacitor Core Dependencies
         run: npm install
 
+      # DYNAMIC ASSET COMPILATION STEP: Creates a clean child directory and stages assets to bypass the path validation restriction
+      - name: Stage Production Build Folder
+        run: |
+          mkdir -id www
+          cp index.html www/
+          cp style.css www/
+          cp game.js www/
+          cp environment.js www/
+          cp audio.js www/
+
       - name: Initialize Capacitor Configuration Shell
-        run: npx cap init "Voxel Hopper" "com.thegamut.voxelhopper" --web-dir=.
+        run: npx cap init "Voxel Hopper" "com.thegamut.voxelhopper" --web-dir=www
 
       - name: Initialize Native Android Platform Wrapper
         run: |
