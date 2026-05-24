@@ -266,3 +266,9 @@ button:active {
     box-shadow: none;
     padding: 0;
 }
+
+/* POLISH ADDITION: Clean support styles to prevent alpha bleeding during high speed trail renders */
+.ghost-trail {
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
