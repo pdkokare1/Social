@@ -30,7 +30,7 @@ window.startAmbientLoop = function() {
         window.ambientFilter.frequency.setValueAtTime(1200, now);
 
         window.ambientGain = window.audioCtx.createGain();
-        window.ambientGain.gain.setValueAtTime(0.04, now); // Retain perfect mix balance
+        window.ambientGain.gain.setValueAtTime(0.002, now); // Attenuated to a virtually imperceptible balance to eliminate background noise distraction
 
         // Synthesize soft rhythm chords programmatically
         window.ambientOsc1 = window.audioCtx.createOscillator();
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!window.ambientOsc1) {
                 window.initAudio();
             } else if (window.ambientGain) {
-                window.ambientGain.gain.setValueAtTime(0.04, window.audioCtx.currentTime);
+                window.ambientGain.gain.setValueAtTime(0.002, window.audioCtx.currentTime);
             }
         }
         window.initAudio();
