@@ -59,8 +59,20 @@ window.updateAmbientFilters = function(state) {
     const now = window.audioCtx.currentTime;
     if (state === 'underwater') {
         window.ambientFilter.frequency.exponentialRampToValueAtTime(280, now + 0.3);
+    } else if (state === 'hazard') {
+        // HAZARD MODULATION: Muffle background sound to highlight railway alarm warnings
+        window.ambientFilter.frequency.exponentialRampToValueAtTime(420, now + 0.2);
     } else {
         window.ambientFilter.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+    }
+
+    // COMBO TEMPO SHIFT: Elevate background harmony pitch node dynamically during high streak play
+    if (window.ambientOsc2 && window.currentComboMultiplier) {
+        if (window.currentComboMultiplier >= 3) {
+            window.ambientOsc2.frequency.setValueAtTime(220, now); // Scale up to octave A chord node
+        } else {
+            window.ambientOsc2.frequency.setValueAtTime(165, now); // Revert to baseline standard layer
+        }
     }
 };
 
@@ -130,6 +142,15 @@ window.playSynthSound = function(type) {
             gainNode.gain.linearRampToValueAtTime(0.01, now + 0.08);
             osc.start(now);
             osc.stop(now + 0.08);
+        } else if (type === 'coin') {
+            // ARCADIAN STAR COIN SYNTHESIS: Progressive Arpeggiating High-Chime Ping
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(987.77, now); // B5 Note
+            osc.frequency.setValueAtTime(1318.51, now + 0.06); // E6 High Chime Note
+            gainNode.gain.setValueAtTime(0.12, now);
+            gainNode.gain.linearRampToValueAtTime(0.001, now + 0.22);
+            osc.start(now);
+            osc.stop(now + 0.22);
         }
     } catch (e) {
         console.warn("Audio Context blocked or failed initialization", e);
