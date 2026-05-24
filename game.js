@@ -292,7 +292,6 @@ function processInputQueue() {
     const { dx, dz } = inputBuffer;
     inputBuffer = null; 
 
-    // FIXED INVISIBLE WALL BUG: Removed snapping line that was triggering artificial position blockades.
     const nextX = playerGridX + dx;
     const nextZ = playerGridZ + dz;
 
@@ -301,8 +300,8 @@ function processInputQueue() {
     updateActiveViewportLanes(nextZ);
     
     const targetLane = lanes[nextZ];
-    if (targetLane && targetLane.type === 'grass') {
-        if (targetLane.obstacles && targetLane.obstacles[nextX]) return;
+    if (targetLane) {
+        if (targetLane.obstacles && targetLane.obstacles[nextX] === true) return;
     }
 
     window.playerGridX = playerGridX = nextX; 
