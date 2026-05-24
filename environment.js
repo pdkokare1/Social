@@ -17,6 +17,7 @@ window.matLily = new THREE.MeshStandardMaterial({ color: 0x298a4e, roughness: 0.
 window.matTreeLeaves = new THREE.MeshStandardMaterial({ color: 0x1b612c, roughness: 0.65, flatShading: true });
 window.matTreeLeavesLight = new THREE.MeshStandardMaterial({ color: 0x247c3a, roughness: 0.65, flatShading: true });
 window.matTrunk = new THREE.MeshStandardMaterial({ color: 0x452815, roughness: 0.9, flatShading: true });
+window.matTrunk = new THREE.MeshStandardMaterial({ color: 0x452815, roughness: 0.9, flatShading: true });
 window.matLog = new THREE.MeshStandardMaterial({ color: 0x61391e, roughness: 0.85, flatShading: true });
 window.matRock = new THREE.MeshStandardMaterial({ color: 0x7c8491, roughness: 0.8, metalness: 0.2, flatShading: true });
 window.matRockDark = new THREE.MeshStandardMaterial({ color: 0x5d636e, roughness: 0.8, metalness: 0.2, flatShading: true });
@@ -70,6 +71,11 @@ window.obstacleMeshPool = {
     cyberTower: []
 };
 
+// MULTI-BIOME VISUAL JUICE REGISTRIES: Track water structures and star coins seamlessly
+window.riverWaterMeshes = [];
+window.activeStarCoins = {}; 
+window.matStarCoin = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.1, metalness: 0.9, flatShading: true });
+
 window.getBiomeType = function(z) {
     if (z < 50) return 'forest';
     if (z < 100) return 'desert';
@@ -119,6 +125,31 @@ window.updateEnvironmentAnimations = function(delta, time) {
         } else {
             window.tumbleweeds.splice(i, 1);
         }
+    }
+
+    // VISUAL JUICE UPGRADE: Smooth sinusoidal liquid wave scale and position displacement for active river segments
+    if (window.riverWaterMeshes) {
+        for (let j = window.riverWaterMeshes.length - 1; j >= 0; j--) {
+            const waterMesh = window.riverWaterMeshes[j];
+            if (waterMesh && waterMesh.parent) {
+                waterMesh.position.y = -0.9 + Math.sin(time * 1.8 + waterMesh.position.z) * 0.025;
+            } else {
+                window.riverWaterMeshes.splice(j, 1);
+            }
+        }
+    }
+
+    // INTERACTIVE JUICE UPGRADE: Rotate and hover collectible star coins programmatically
+    if (window.activeStarCoins) {
+        Object.keys(window.activeStarCoins).forEach(key => {
+            const coinMesh = window.activeStarCoins[key];
+            if (coinMesh && coinMesh.parent) {
+                coinMesh.rotation.y += delta * 2.5;
+                coinMesh.position.y = 0.35 + Math.sin(time * 3.5 + coinMesh.position.x) * 0.06;
+            } else {
+                delete window.activeStarCoins[key];
+            }
+        });
     }
 };
 
@@ -177,6 +208,9 @@ window.generateLane = function(z) {
         laneObj.mesh.position.set(0, -0.9, z);
         laneObj.mesh.receiveShadow = true;
         window.scene.add(laneObj.mesh);
+
+        // Track water geometry context cleanly for liquid waving translations
+        window.riverWaterMeshes.push(laneObj.mesh);
 
         laneObj.foamGroup = new THREE.Group();
         window.scene.add(laneObj.foamGroup);
@@ -396,6 +430,18 @@ window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
             flowerGroup.position.set((c - window.START_COL) + (Math.random() - 0.5) * 0.3, 0, z + (Math.random() - 0.5) * 0.3);
             flowerGroup.name = "flower";
             lane.visualGroup.add(flowerGroup);
+        } else if (itemRand > 0.90 && (lane.type === 'grass' || lane.type === '')) {
+            // META PROGRESSION UPGRADE: Procedural generation of 3D star coins on unoccupied paths
+            const coinX = c - window.START_COL;
+            const coinKey = `${coinX}_${z}`;
+            
+            const coinMesh = new THREE.Mesh(window.boxGeo, window.matStarCoin);
+            coinMesh.scale.set(0.3, 0.3, 0.08);
+            coinMesh.position.set(coinX, 0.35, z);
+            coinMesh.castShadow = true;
+            
+            lane.visualGroup.add(coinMesh);
+            window.activeStarCoins[coinKey] = coinMesh;
         }
     }
 };
