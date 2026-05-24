@@ -1,0 +1,6 @@
+{
+  "appId": "com.thegamut.voxelhopper",
+  "appName": "Voxel Hopper",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
