@@ -69,6 +69,8 @@ window.getBiomeType = function(z) {
 
 // DOM Projection Helper displays vibrant floating tags matching biomes
 window.spawnFloatingIndicator = function(textStr, colorHexStr) {
+    const containerEl = document.getElementById('gameContainer');
+    if (!containerEl) return;
     const tempDiv = document.createElement('div');
     tempDiv.className = 'floating-indicator';
     tempDiv.innerText = textStr;
@@ -78,7 +80,7 @@ window.spawnFloatingIndicator = function(textStr, colorHexStr) {
     tempDiv.style.left = '50%';
     tempDiv.style.top = '45%';
     
-    document.getElementById('gameContainer').appendChild(tempDiv);
+    containerEl.appendChild(tempDiv);
     setTimeout(() => { tempDiv.remove(); }, 600);
 };
 
@@ -100,7 +102,8 @@ window.updateEnvironmentAnimations = function(delta, time) {
             tw.mesh.rotation.z -= (tw.speed * 1.5) * (delta * 60);
             tw.mesh.position.y = 0.15 + Math.abs(Math.sin(time * 5 + tw.mesh.position.x)) * 0.2;
             
-            if (Math.abs(tw.mesh.position.x - (window.playerMesh ? window.playerMesh.position.x : 0)) > 25) {
+            const pX = window.playerMesh ? window.playerMesh.position.x : 0;
+            if (Math.abs(tw.mesh.position.x - pX) > 25) {
                 window.scene.remove(tw.mesh);
                 window.tumbleweeds.splice(i, 1);
             }
@@ -264,14 +267,16 @@ window.generateLane = function(z) {
     }
 
     if (laneObj.type === 'grass') {
-        window.ensureObstaclesGeneratedForRange(laneObj, z, window.playerGridX - 35, window.playerGridX + 35);
+        const gridX = window.playerGridX !== undefined ? window.playerGridX : window.START_COL;
+        window.ensureObstaclesGeneratedForRange(laneObj, z, gridX - 35, gridX + 35);
     }
 
     // Polish Addition: Ambiently roll tumbleweed particles down newly formed sand biomes
     if (biome === 'desert' && Math.random() < 0.25) {
         const twMesh = new THREE.Mesh(window.boxGeo, window.matTumbleweed);
         twMesh.scale.set(0.25, 0.25, 0.25);
-        twMesh.position.set(window.playerMesh ? window.playerMesh.position.x - 18 : -18, 0.15, z);
+        const pX = window.playerMesh ? window.playerMesh.position.x : 0;
+        twMesh.position.set(pX - 18, 0.15, z);
         window.scene.add(twMesh);
         window.tumbleweeds.push({ mesh: twMesh, speed: 0.06 + Math.random() * 0.08 });
     }
@@ -351,29 +356,30 @@ window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
 
 window.createHighDetailVehicle = function(profile, direction) {
     const vehicle = new THREE.Group();
+    const dirSign = direction > 0 ? 1 : -1;
     
     if (profile === 'truck') {
         const cargoColor = new THREE.Color().setHSL(Math.random(), 0.12, 0.8); 
         const cabColor = new THREE.Color().setHSL(Math.random(), 0.8, 0.4);
         
         const cab = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: cabColor, roughness: 0.4, flatShading: true }));
-        cab.scale.set(0.7, 0.9, 0.76); cab.position.set(direction > 0 ? 0.8 : -0.8, 0.48, 0);
+        cab.scale.set(0.7, 0.9, 0.76); cab.position.set(dirSign > 0 ? 0.8 : -0.8, 0.48, 0);
         cab.castShadow = true; vehicle.add(cab);
 
         const grill = new THREE.Mesh(window.boxGeo, window.matIronDark);
-        grill.scale.set(0.04, 0.3, 0.6); grill.position.set(direction > 0 ? 1.16 : -1.16, 0.3, 0);
+        grill.scale.set(0.04, 0.3, 0.6); grill.position.set(dirSign > 0 ? 1.16 : -1.16, 0.3, 0);
         vehicle.add(grill);
 
         const windshield = new THREE.Mesh(window.boxGeo, window.matGlassPool);
-        windshield.scale.set(0.04, 0.28, 0.66); windshield.position.set(direction > 0 ? 1.15 : -1.15, 0.68, 0);
+        windshield.scale.set(0.04, 0.28, 0.66); windshield.position.set(dirSign > 0 ? 1.15 : -1.15, 0.68, 0);
         vehicle.add(windshield);
 
         const containerBox = new THREE.Mesh(window.boxGeo, new THREE.MeshStandardMaterial({ color: cargoColor, roughness: 0.5, flatShading: true }));
-        containerBox.scale.set(1.6, 1.2, 0.86); containerBox.position.set(direction > 0 ? -0.35 : 0.35, 0.66, 0);
+        containerBox.scale.set(1.6, 1.2, 0.86); containerBox.position.set(dirSign > 0 ? -0.35 : 0.35, 0.66, 0);
         containerBox.castShadow = true; vehicle.add(containerBox);
 
         const trim = new THREE.Mesh(window.boxGeo, window.matRailSteel);
-        trim.scale.set(1.5, 0.06, 0.88); trim.position.set(direction > 0 ? -0.35 : 0.35, 1.26, 0);
+        trim.scale.set(1.5, 0.06, 0.88); trim.position.set(dirSign > 0 ? -0.35 : 0.35, 1.26, 0);
         vehicle.add(trim);
 
         const guard = new THREE.Mesh(window.boxGeo, window.matRailSteel);
@@ -381,11 +387,11 @@ window.createHighDetailVehicle = function(profile, direction) {
 
         const w1 = new THREE.Mesh(window.boxGeo, window.matWheelPool); w1.scale.set(0.34, 0.34, 0.15); w1.position.set(0.75, 0.17, 0.4);
         const w2 = w1.clone(); w2.position.z = -0.4;
-        const w3 = w1.clone(); w3.position.set(direction > 0 ? -0.25 : 0.25, 0.17, 0.4);
+        const w3 = w1.clone(); w3.position.set(dirSign > 0 ? -0.25 : 0.25, 0.17, 0.4);
         const w4 = w3.clone(); w4.position.z = -0.4;
-        const w5 = w1.clone(); w5.position.set(direction > 0 ? -0.42 : 0.42, 0.17, 0.4);
+        const w5 = w1.clone(); w5.position.set(dirSign > 0 ? -0.42 : 0.42, 0.17, 0.4);
         const w6 = w5.clone(); w6.position.z = -0.4;
-        const w7 = w1.clone(); w7.position.set(direction > 0 ? -0.95 : 0.95, 0.17, 0.4);
+        const w7 = w1.clone(); w7.position.set(dirSign > 0 ? -0.95 : 0.95, 0.17, 0.4);
         const w8 = w7.clone(); w8.position.z = -0.4;
         vehicle.add(w1, w2, w3, w4, w5, w6, w7, w8);
     } else {
@@ -395,17 +401,17 @@ window.createHighDetailVehicle = function(profile, direction) {
         const baseBody = new THREE.Mesh(window.boxGeo, matBody);
         baseBody.scale.set(1.4, 0.4, 0.8); baseBody.position.y = 0.26; baseBody.castShadow = true; vehicle.add(baseBody);
 
-        const upperCabin = new THREE.Mesh(boxGeo, matBody);
-        upperCabin.scale.set(0.8, 0.36, 0.72); upperCabin.position.set(direction > 0 ? -0.12 : 0.12, 0.62, 0);
+        const upperCabin = new THREE.Mesh(window.boxGeo, matBody);
+        upperCabin.scale.set(0.8, 0.36, 0.72); upperCabin.position.set(dirSign > 0 ? -0.12 : 0.12, 0.62, 0);
         upperCabin.castShadow = true; vehicle.add(upperCabin);
 
         const wind = new THREE.Mesh(window.boxGeo, window.matGlassPool);
-        wind.scale.set(0.04, 0.24, 0.62); wind.position.set(direction > 0 ? 0.29 : -0.29, 0.62, 0); vehicle.add(wind);
+        wind.scale.set(0.04, 0.24, 0.62); wind.position.set(dirSign > 0 ? 0.29 : -0.29, 0.62, 0); vehicle.add(wind);
         
-        const rearWind = wind.clone(); rearWind.position.x = direction > 0 ? -0.53 : 0.53; vehicle.add(rearWind);
+        const rearWind = wind.clone(); rearWind.position.x = dirSign > 0 ? -0.53 : 0.53; vehicle.add(rearWind);
 
         const bumperF = new THREE.Mesh(window.boxGeo, window.matIronDark);
-        bumperF.scale.set(0.08, 0.14, 0.8); bumperF.position.set(direction > 0 ? 0.71 : -0.71, 0.18, 0); vehicle.add(bumperF);
+        bumperF.scale.set(0.08, 0.14, 0.8); bumperF.position.set(dirSign > 0 ? 0.71 : -0.71, 0.18, 0); vehicle.add(bumperF);
 
         const wh1 = new THREE.Mesh(window.boxGeo, window.matWheelPool); wh1.scale.set(0.32, 0.32, 0.13); wh1.position.set(0.42, 0.16, 0.41);
         const wh2 = wh1.clone(); wh2.position.z = -0.41;
@@ -415,8 +421,8 @@ window.createHighDetailVehicle = function(profile, direction) {
     }
 
     const hlL = new THREE.Mesh(window.boxGeo, window.matGlowPool); hlL.scale.set(0.04, 0.09, 0.14);
-    hlL.position.set(direction > 0 ? 0.71 : -0.71, 0.34, 0.26);
-    if(profile === 'truck') hlL.position.x = direction > 0 ? 1.16 : -1.16;
+    hlL.position.set(dirSign > 0 ? 0.71 : -0.71, 0.34, 0.26);
+    if(profile === 'truck') hlL.position.x = dirSign > 0 ? 1.16 : -1.16;
     const hlR = hlL.clone(); hlR.position.z = -0.24;
     vehicle.add(hlL, hlR);
 
@@ -424,13 +430,13 @@ window.createHighDetailVehicle = function(profile, direction) {
     if (window.maxRowReached >= 40) {
         const rayCone = new THREE.Mesh(window.boxGeo, window.matHeadlightCone);
         rayCone.scale.set(2.4, 0.02, 0.65);
-        rayCone.position.set(direction > 0 ? hlL.position.x + 1.2 : hlL.position.x - 1.2, 0.32, 0);
+        rayCone.position.set(dirSign > 0 ? hlL.position.x + 1.2 : hlL.position.x - 1.2, 0.32, 0);
         vehicle.add(rayCone);
     }
 
     const brakeL = new THREE.Mesh(window.boxGeo, window.matSignalTail); brakeL.scale.set(0.04, 0.08, 0.14);
-    brakeL.position.set(direction > 0 ? -0.71 : 0.71, 0.34, 0.26);
-    if(profile === 'truck') brakeL.position.x = direction > 0 ? -1.16 : 1.16;
+    brakeL.position.set(dirSign > 0 ? -0.71 : 0.71, 0.34, 0.26);
+    if(profile === 'truck') brakeL.position.x = dirSign > 0 ? -1.16 : 1.16;
     const brakeR = brakeL.clone(); brakeR.position.z = -0.26;
     vehicle.add(brakeL, brakeR);
 
@@ -438,6 +444,7 @@ window.createHighDetailVehicle = function(profile, direction) {
 };
 
 window.updatePooledVehicleProperties = function(carGroup, profile, direction) {
+    if (!carGroup) return;
     for(let i = carGroup.children.length - 1; i >= 0; i--) {
         carGroup.remove(carGroup.children[i]);
     }
@@ -449,6 +456,7 @@ window.updatePooledVehicleProperties = function(carGroup, profile, direction) {
 
 window.spawnCarEntity = function(lane, z) {
     let carGroup;
+    const pX = window.playerMesh ? window.playerMesh.position.x : 0;
     if(window.vehiclePool.length > 0) {
         carGroup = window.vehiclePool.pop();
         window.updatePooledVehicleProperties(carGroup, lane.vehicleProfile, lane.speed);
@@ -456,13 +464,14 @@ window.spawnCarEntity = function(lane, z) {
     } else {
         carGroup = window.createHighDetailVehicle(lane.vehicleProfile, lane.speed);
     }
-    carGroup.position.set(lane.speed > 0 ? window.playerMesh.position.x - 16 : window.playerMesh.position.x + 16, 0, z);
+    carGroup.position.set(lane.speed > 0 ? pX - 16 : pX + 16, 0, z);
     if(!carGroup.parent) window.scene.add(carGroup); 
     lane.vehicles.push(carGroup);
 };
 
 window.spawnLogEntity = function(lane, z) {
     let logGroup;
+    const pX = window.playerMesh ? window.playerMesh.position.x : 0;
     if(window.logPool.length > 0) {
         logGroup = window.logPool.pop();
         logGroup.visible = true;
@@ -471,7 +480,7 @@ window.spawnLogEntity = function(lane, z) {
         logGroup.scale.set(2.5, 0.28, 0.76); 
         logGroup.receiveShadow = true;
     }
-    logGroup.position.set(lane.speed > 0 ? window.playerMesh.position.x - 16 : window.playerMesh.position.x + 16, -0.08, z); 
+    logGroup.position.set(lane.speed > 0 ? pX - 16 : pX + 16, -0.08, z); 
     if(!logGroup.parent) window.scene.add(logGroup); 
     lane.logs.push(logGroup);
 };
@@ -526,6 +535,7 @@ window.createTrainStructure = function(lane) {
 
 window.spawnTrainEntity = function(lane, z) {
     let trainAssembly;
+    const pX = window.playerMesh ? window.playerMesh.position.x : 0;
     if(window.trainPool.length > 0) {
         trainAssembly = window.trainPool.pop();
         for(let i = trainAssembly.children.length - 1; i >= 0; i--) {
@@ -540,12 +550,13 @@ window.spawnTrainEntity = function(lane, z) {
         trainAssembly = window.createTrainStructure(lane);
     }
     
-    trainAssembly.position.set(lane.speed > 0 ? window.playerMesh.position.x - 24 : window.playerMesh.position.x + 24, 0, z); 
+    trainAssembly.position.set(lane.speed > 0 ? pX - 24 : pX + 24, 0, z); 
     if(!trainAssembly.parent) window.scene.add(trainAssembly); 
     lane.trains.push(trainAssembly);
 };
 
 window.spawnEnvCubeParticles = function(x, y, z, colorCode, count) {
+    if (!window.particles || !window.scene) return;
     window.matParticleBase.color.setHex(colorCode);
     for (let i = 0; i < count; i++) {
         const pMesh = new THREE.Mesh(window.boxGeo, window.matParticleBase.clone());
