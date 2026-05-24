@@ -1,0 +1,57 @@
+name: Build Mobile Application
+
+on:
+  push:
+    branches: [ main, master ] # Triggers the build whenever you push to your main branch
+
+jobs:
+  build-android:
+    name: Build Android Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: package.json
+          
+      - name: Initialize Dummy NPM Package
+        run: |
+          if [ ! -f package.json ]; then
+            echo '{"name":"voxelhopper","version":"1.0.0","dependencies":{"@capacitor/core":"^6.0.0"},"devDependencies":{"@capacitor/cli":"^6.0.0","@capacitor/android":"^6.0.0"}}' > package.json
+          fi
+
+      - name: Install Capacitor Core Dependencies
+        run: npm install
+
+      - name: Initialize Native Android Platform Wrapper
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Set up Java Development Kit (JDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK Build Tools
+        uses: android-actions/setup-android@v3
+
+      - name: Compile Native Android Package (APK)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload Downloadable Application Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoxelHopper-Android-Release
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 7
