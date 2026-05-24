@@ -54,7 +54,7 @@ const SKINS = [
     { id: 'chicken', name: 'Chicken', icon: '🐔', cost: 0 },
     { id: 'cyber', name: 'Cyber', icon: '🤖', cost: 250 },
     { id: 'frog', name: 'Frog', icon: '🐸', cost: 750 },
-    { id: 'golden', name: 'Gold', icon: '👑', cost: 1500 }
+    { id: 'golden', name: 'Gold', icon: '🏆', cost: 1500 }
 ];
 
 // GC Optimization Cache Objects
@@ -65,6 +65,7 @@ const lerpColor1 = new THREE.Color();
 const lerpColor2 = new THREE.Color();
 
 function populateSkinSelector() {
+    if (!skinContainer) return;
     skinContainer.innerHTML = '';
     SKINS.forEach(skin => {
         const isLocked = cumulativeSteps < skin.cost;
@@ -95,7 +96,9 @@ function populateSkinSelector() {
 }
 
 function initEngine() {
-    highScoreLabel.innerText = `BEST: ${String(globalHighScore).padStart(2, '0')}`;
+    if (highScoreLabel) {
+        highScoreLabel.innerText = `BEST: ${String(globalHighScore).padStart(2, '0')}`;
+    }
     populateSkinSelector();
 
     scene = new THREE.Scene();
@@ -112,14 +115,16 @@ function initEngine() {
     window.playerGridZ = playerGridZ;
     window.currentComboMultiplier = currentComboMultiplier;
 
-    const aspect = container.clientWidth / container.clientHeight;
+    const aspect = container ? container.clientWidth / container.clientHeight : 1;
     const d = 6.0;
     camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
     camera.position.set(9, 10, 9);
     camera.lookAt(0, 0, 0);
 
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    if (container) {
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -141,7 +146,6 @@ function initEngine() {
 
     buildPlayer();
     setupInputSystems();
-
     preWarmShaderCache();
 
     window.addEventListener('resize', onResize);
@@ -243,6 +247,7 @@ function rebuildPlayerSkin() {
 }
 
 function setupInputSystems() {
+    if (!container) return;
     container.addEventListener('touchstart', (e) => {
         if (gameState !== 'PLAYING' || isShattered) return;
         e.preventDefault();
@@ -280,7 +285,9 @@ function queueMove(dx, dz) {
     
     /* EXPERIMENTAL KINEMATICS: Trigger anticipatory squish-flatten frame right on keystroke down */
     squishX = 1.35; squishY = 0.45; squishZ = 1.35;
-    chickenCoreGroup.scale.set(squishX, squishY, squishZ);
+    if (chickenCoreGroup) {
+        chickenCoreGroup.scale.set(squishX, squishY, squishZ);
+    }
 
     inputBuffer = { dx, dz };
     if (!isJumping) processInputQueue();
@@ -315,10 +322,12 @@ function processInputQueue() {
     targetPlayerX = (playerGridX - window.START_COL); 
     targetPlayerZ = playerGridZ;
     
-    if (dx !== 0) {
-        chickenCoreGroup.rotation.y = dx > 0 ? Math.PI / 2 : -Math.PI / 2;
-    } else if (dz !== 0) {
-        chickenCoreGroup.rotation.y = dz > 0 ? 0 : Math.PI;
+    if (chickenCoreGroup) {
+        if (dx !== 0) {
+            chickenCoreGroup.rotation.y = dx > 0 ? Math.PI / 2 : -Math.PI / 2;
+        } else if (dz !== 0) {
+            chickenCoreGroup.rotation.y = dz > 0 ? 0 : Math.PI;
+        }
     }
 
     if (dz > 0) {
@@ -334,16 +343,18 @@ function processInputQueue() {
             window.currentComboMultiplier = currentComboMultiplier = 1;
         }
 
-        if (currentComboMultiplier > 1) {
-            comboBadge.innerText = `COMBO X${currentComboMultiplier}`;
-            comboBadge.classList.add('active');
-        } else {
-            comboBadge.classList.remove('active');
+        if (comboBadge) {
+            if (currentComboMultiplier > 1) {
+                comboBadge.innerText = `COMBO X${currentComboMultiplier}`;
+                comboBadge.classList.add('active');
+            } else {
+                comboBadge.classList.remove('active');
+            }
         }
     } else if (dz < 0 || dx !== 0) {
         forwardComboCount = 0;
         window.currentComboMultiplier = currentComboMultiplier = 1;
-        comboBadge.classList.remove('active');
+        if (comboBadge) comboBadge.classList.remove('active');
     }
 
     cumulativeSteps++;
@@ -363,9 +374,8 @@ function processInputQueue() {
     }
 }
 
-// Polish Addition: Generate short-lived transparent mesh clones matching the active skin
 function spawnGhostTrailEcho() {
-    if (!playerParts.body) return;
+    if (!playerParts.body || !playerMesh) return;
     const trailGroup = new THREE.Group();
     trailGroup.position.copy(playerMesh.position);
     trailGroup.rotation.copy(playerMesh.rotation);
@@ -402,7 +412,7 @@ function updateActiveViewportLanes(centerZ) {
         const z = parseInt(laneKey);
         if (z < minZ || z > maxZ) {
             const lane = lanes[z];
-            scene.remove(lane.mesh);
+            if (lane.mesh) scene.remove(lane.mesh);
             if (lane.vehicles) {
                 lane.vehicles.forEach(v => { v.visible = false; window.vehiclePool.push(v); });
             }
@@ -468,7 +478,7 @@ function updateGameLogic(delta) {
     }
 
     // Camera Structural Shake Decay Interpolations
-    if (cameraShakeIntensity > 0) {
+    if (cameraShakeIntensity > 0 && container) {
         cameraShakeIntensity -= delta * 2.5;
         let sx = (Math.random() - 0.5) * cameraShakeIntensity;
         let sy = (Math.random() - 0.5) * cameraShakeIntensity;
@@ -480,7 +490,7 @@ function updateGameLogic(delta) {
 
     const speedModifier = delta * 60;
 
-    if (isJumping) {
+    if (isJumping && playerMesh) {
         jumpProgress += 0.15 * speedModifier; 
         if (jumpProgress >= 1.0) {
             isJumping = false;
@@ -495,8 +505,10 @@ function updateGameLogic(delta) {
                 window.spawnEnvCubeParticles(playerMesh.position.x, 0.05, playerMesh.position.z, particleColor, 5 + currentComboMultiplier);
             }
             
-            chickenCoreGroup.rotation.x = 0;
-            chickenCoreGroup.rotation.z = 0;
+            if (chickenCoreGroup) {
+                chickenCoreGroup.rotation.x = 0;
+                chickenCoreGroup.rotation.z = 0;
+            }
             
             processInputQueue();
         } else {
@@ -504,16 +516,18 @@ function updateGameLogic(delta) {
             playerMesh.position.z = startPlayerZ + (targetPlayerZ - startPlayerZ) * jumpProgress;
             playerMesh.position.y = Math.sin(jumpProgress * Math.PI) * 0.54;
             
-            if (currentMoveDZ > 0) {
-                chickenCoreGroup.rotation.x = -Math.sin(jumpProgress * Math.PI) * 0.16;
-            } else if (currentMoveDZ < 0) {
-                chickenCoreGroup.rotation.x = Math.sin(jumpProgress * Math.PI) * 0.16;
-            }
-            
-            if (currentMoveDX > 0) {
-                chickenCoreGroup.rotation.z = Math.sin(jumpProgress * Math.PI) * 0.16;
-            } else if (currentMoveDX < 0) {
-                chickenCoreGroup.rotation.z = -Math.sin(jumpProgress * Math.PI) * 0.16;
+            if (chickenCoreGroup) {
+                if (currentMoveDZ > 0) {
+                    chickenCoreGroup.rotation.x = -Math.sin(jumpProgress * Math.PI) * 0.16;
+                } else if (currentMoveDZ < 0) {
+                    chickenCoreGroup.rotation.x = Math.sin(jumpProgress * Math.PI) * 0.16;
+                }
+                
+                if (currentMoveDX > 0) {
+                    chickenCoreGroup.rotation.z = Math.sin(jumpProgress * Math.PI) * 0.16;
+                } else if (currentMoveDX < 0) {
+                    chickenCoreGroup.rotation.z = -Math.sin(jumpProgress * Math.PI) * 0.16;
+                }
             }
         }
     } else {
@@ -522,33 +536,36 @@ function updateGameLogic(delta) {
         squishZ += (1 - squishZ) * 0.22 * speedModifier;
         processInputQueue();
     }
-    chickenCoreGroup.scale.set(squishX, squishY, squishZ);
+    if (chickenCoreGroup) {
+        chickenCoreGroup.scale.set(squishX, squishY, squishZ);
+    }
 
     if (forwardComboCount > 0 && (performance.now() - lastForwardHopTime) / 1000 > 0.45) {
         forwardComboCount = 0;
         window.currentComboMultiplier = currentComboMultiplier = 1;
-        comboBadge.classList.remove('active');
+        if (comboBadge) comboBadge.classList.remove('active');
     }
 
     if (playerGridZ > maxRowReached) {
         window.maxRowReached = maxRowReached = playerGridZ;
-        scoreDisplay.innerText = String(maxRowReached).padStart(2, '0');
+        if (scoreDisplay) {
+            scoreDisplay.innerText = String(maxRowReached).padStart(2, '0');
+            let uiScale = 1.2 + (currentComboMultiplier - 1) * 0.08;
+            scoreDisplay.style.transform = `scale(${uiScale})`;
+            setTimeout(() => { if (scoreDisplay) scoreDisplay.style.transform = 'scale(1)'; }, 100);
+
+            if (maxRowReached > globalHighScore && globalHighScore > 0) {
+                scoreDisplay.style.color = '#00ff66';
+            } else if (currentComboMultiplier > 1) {
+                scoreDisplay.style.color = '#ffcc00';
+            } else {
+                scoreDisplay.style.color = '#ffffff';
+            }
+        }
         
         let currentBiome = window.getBiomeType(maxRowReached);
         let indicatorColorStr = currentBiome === 'cyber' ? '#00f3ff' : (currentBiome === 'desert' ? '#ffaa00' : '#4fa642');
         window.spawnFloatingIndicator(`+1`, indicatorColorStr);
-
-        let uiScale = 1.2 + (currentComboMultiplier - 1) * 0.08;
-        scoreDisplay.style.transform = `scale(${uiScale})`;
-        setTimeout(() => scoreDisplay.style.transform = 'scale(1)', 100);
-
-        if (maxRowReached > globalHighScore && globalHighScore > 0) {
-            scoreDisplay.style.color = '#00ff66';
-        } else if (currentComboMultiplier > 1) {
-            scoreDisplay.style.color = '#ffcc00';
-        } else {
-            scoreDisplay.style.color = '#ffffff';
-        }
         
         window.playSynthSound('score');
         
@@ -577,21 +594,25 @@ function updateGameLogic(delta) {
         }
         scene.background = cacheSkyColor;
         if(scene.fog) scene.fog.color = cacheFogColor;
-        hemiLight.groundColor = cacheGroundColor;
+        if(hemiLight) hemiLight.groundColor = cacheGroundColor;
     }
 
     /* GRAPHICS PROGRESSION UPGRADE: Fluid Time-of-Day sun axis angle tracking based on player step milestones */
-    let sunRotationAngle = timeTotal * 0.05 + (maxRowReached * 0.01);
-    sunLight.position.x = Math.round(camera.position.x) + Math.cos(sunRotationAngle) * 12 + 5; 
-    sunLight.position.z = Math.round(camera.position.z) + Math.sin(sunRotationAngle) * 12;
-    sunLight.position.y = 18 + Math.abs(Math.sin(sunRotationAngle)) * 8;
+    if (sunLight && camera) {
+        let sunRotationAngle = timeTotal * 0.05 + (maxRowReached * 0.01);
+        sunLight.position.x = Math.round(camera.position.x) + Math.cos(sunRotationAngle) * 12 + 5; 
+        sunLight.position.z = Math.round(camera.position.z) + Math.sin(sunRotationAngle) * 12;
+        sunLight.position.y = 18 + Math.abs(Math.sin(sunRotationAngle)) * 8;
+    }
 
-    camera.position.x += ((playerMesh.position.x + 8.5) - camera.position.x) * 0.08 * speedModifier;
-    camera.position.z += ((playerMesh.position.z + 8.5) - camera.position.z) * 0.08 * speedModifier;
+    if (camera && playerMesh) {
+        camera.position.x += ((playerMesh.position.x + 8.5) - camera.position.x) * 0.08 * speedModifier;
+        camera.position.z += ((playerMesh.position.z + 8.5) - camera.position.z) * 0.08 * speedModifier;
+    }
 
     const minZ = Math.max(0, playerGridZ - 6);
     const maxZ = playerGridZ + 14;
-    const currentCenterX = Math.round(playerMesh.position.x);
+    const currentCenterX = playerMesh ? Math.round(playerMesh.position.x) : 0;
 
     // Polish Addition: Reset background audio filter parameters to standard profile
     if (window.updateAmbientFilters) {
@@ -614,13 +635,13 @@ function updateGameLogic(delta) {
                     });
                 }
 
-                if (playerGridZ === z && Math.abs(car.position.x - playerMesh.position.x) < 0.95) { 
+                if (playerMesh && playerGridZ === z && Math.abs(car.position.x - playerMesh.position.x) < 0.95) { 
                     window.playSynthSound('crash_sedan');
                     cameraShakeIntensity = 0.35; 
                     triggerDeath(0xff1133); 
                     return; 
                 }
-                if (Math.abs(car.position.x - playerMesh.position.x) > 20) {
+                if (playerMesh && Math.abs(car.position.x - playerMesh.position.x) > 20) {
                     car.visible = false;
                     window.vehiclePool.push(car);
                     lane.vehicles.splice(i, 1);
@@ -632,7 +653,7 @@ function updateGameLogic(delta) {
             let ridingLog = false;
             for (let i = lane.logs.length - 1; i >= 0; i--) {
                 const log = lane.logs[i]; log.position.x += lane.speed * 0.024 * speedModifier;
-                if (playerGridZ === z && !isJumping && Math.abs(log.position.x - playerMesh.position.x) < 1.35) {
+                if (playerMesh && playerGridZ === z && !isJumping && Math.abs(log.position.x - playerMesh.position.x) < 1.35) {
                     ridingLog = true; playerMesh.position.x += lane.speed * 0.024 * speedModifier;
                     window.playerGridX = playerGridX = Math.round(playerMesh.position.x + window.START_COL); targetPlayerX = playerMesh.position.x;
                     if (playerGridX < 0 || playerGridX >= window.COLS) { 
@@ -642,7 +663,7 @@ function updateGameLogic(delta) {
                         return; 
                     }
                 }
-                if (Math.abs(log.position.x - playerMesh.position.x) > 20) {
+                if (playerMesh && Math.abs(log.position.x - playerMesh.position.x) > 20) {
                     log.visible = false;
                     window.logPool.push(log);
                     lane.logs.splice(i, 1);
@@ -650,7 +671,7 @@ function updateGameLogic(delta) {
             }
             
             // Dynamic progressive sinking checks for stepping on standalone lilypads
-            if (lane.lilies && playerGridZ === z && !isJumping) {
+            if (playerMesh && lane.lilies && playerGridZ === z && !isJumping) {
                 lane.lilies.forEach(lily => {
                     if (Math.abs((lily.mesh.position.x) - playerMesh.position.x) < 0.5) {
                         ridingLog = true; 
@@ -670,7 +691,7 @@ function updateGameLogic(delta) {
                 });
             }
             
-            if (lane.foamGroup) {
+            if (playerMesh && lane.foamGroup) {
                 lane.foamGroup.children.forEach(element => {
                     element.position.x += lane.speed * 0.024 * speedModifier;
                     if (element.position.x > playerMesh.position.x + 30) element.position.x -= 60;
@@ -678,7 +699,7 @@ function updateGameLogic(delta) {
                 });
             }
             
-            if (playerGridZ === z && !isJumping && !ridingLog) { 
+            if (playerMesh && playerGridZ === z && !isJumping && !ridingLog) { 
                 window.playSynthSound('splash');
                 cameraShakeIntensity = 0.18;
                 
@@ -725,7 +746,7 @@ function updateGameLogic(delta) {
             for (let i = lane.trains.length - 1; i >= 0; i--) {
                 const train = lane.trains[i]; train.position.x += lane.speed * 0.068 * speedModifier;
                 
-                if (playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
+                if (playerMesh && playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
                     window.playSynthSound('crash_train');
                     
                     /* POLISH ADDITION: Multiply impact smash physical vibration vectors on heavy train crash profiles */
@@ -734,7 +755,7 @@ function updateGameLogic(delta) {
                     triggerDeath(0xff0044); 
                     return; 
                 }
-                if (Math.abs(train.position.x - playerMesh.position.x) > 36) {
+                if (playerMesh && Math.abs(train.position.x - playerMesh.position.x) > 36) {
                     train.visible = false;
                     window.trainPool.push(train);
                     lane.trains.splice(i, 1);
@@ -760,12 +781,14 @@ function animate() {
     requestAnimationFrame(animate);
     const delta = Math.min(clock.getDelta(), 0.1);
     updateGameLogic(delta);
-    renderer.render(scene, camera);
+    if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+    }
 }
 
 function purgeSceneObjects() {
     Object.keys(lanes).forEach(z => {
-        const lane = lanes[z]; scene.remove(lane.mesh);
+        const lane = lanes[z]; if (lane.mesh) scene.remove(lane.mesh);
         if (lane.vehicles) {
             lane.vehicles.forEach(v => { v.visible = false; window.vehiclePool.push(v); });
         }
@@ -794,34 +817,40 @@ function startRunCycle() {
         shatteredParts.forEach(p => { scene.remove(p.mesh); });
         shatteredParts = [];
         isShattered = false;
-        chickenCoreGroup.add(playerParts.body, playerParts.beak, playerParts.comb, playerParts.eyeL, playerParts.eyeR, playerParts.wingL, playerParts.wingR);
-        playerParts.body.position.set(0, 0.34, 0); playerParts.body.rotation.set(0,0,0);
-        playerParts.beak.position.set(0, 0.46, 0.36); playerParts.beak.rotation.set(0,0,0);
-        playerParts.comb.position.set(0, 0.74, 0.04); playerParts.comb.rotation.set(0,0,0);
-        playerParts.eyeL.position.set(0.31, 0.5, 0.16);
-        playerParts.eyeR.position.set(-0.31, 0.5, 0.16);
-        playerParts.wingL.position.set(0.34, 0.32, -0.04); playerParts.wingL.rotation.set(0,0,0);
-        playerParts.wingR.position.set(-0.34, 0.32, -0.04); playerParts.wingR.rotation.set(0,0,0);
+        if (chickenCoreGroup && playerParts.body) {
+            chickenCoreGroup.add(playerParts.body, playerParts.beak, playerParts.comb, playerParts.eyeL, playerParts.eyeR, playerParts.wingL, playerParts.wingR);
+        }
+        if (playerParts.body) { playerParts.body.position.set(0, 0.34, 0); playerParts.body.rotation.set(0,0,0); }
+        if (playerParts.beak) { playerParts.beak.position.set(0, 0.46, 0.36); playerParts.beak.rotation.set(0,0,0); }
+        if (playerParts.comb) { playerParts.comb.position.set(0, 0.74, 0.04); playerParts.comb.rotation.set(0,0,0); }
+        if (playerParts.eyeL) { playerParts.eyeL.position.set(0.31, 0.5, 0.16); }
+        if (playerParts.eyeR) { playerParts.eyeR.position.set(-0.31, 0.5, 0.16); }
+        if (playerParts.wingL) { playerParts.wingL.position.set(0.34, 0.32, -0.04); playerParts.wingL.rotation.set(0,0,0); }
+        if (playerParts.wingR) { playerParts.wingR.position.set(-0.34, 0.32, -0.04); playerParts.wingR.rotation.set(0,0,0); }
     }
 
     window.maxRowReached = maxRowReached = 0; isJumping = false;
     window.playerGridX = playerGridX = window.START_COL; window.playerGridZ = playerGridZ = 0;
-    playerMesh.position.set(0, 0, 0); camera.position.set(9, 10, 9);
-    chickenCoreGroup.rotation.set(0, 0, 0);
+    if (playerMesh) playerMesh.position.set(0, 0, 0); 
+    if (camera) camera.position.set(9, 10, 9);
+    if (chickenCoreGroup) chickenCoreGroup.rotation.set(0, 0, 0);
     squishX = 1; squishY = 1; squishZ = 1;
     cameraShakeIntensity = 0;
 
     forwardComboCount = 0; window.currentComboMultiplier = currentComboMultiplier = 1;
-    comboBadge.classList.remove('active');
+    if (comboBadge) comboBadge.classList.remove('active');
 
-    scoreDisplay.innerText = "00";
-    scoreDisplay.style.color = '#ffffff';
-    newRecordBadge.style.display = 'none';
-    startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden');
+    if (scoreDisplay) {
+        scoreDisplay.innerText = "00";
+        scoreDisplay.style.color = '#ffffff';
+    }
+    if (newRecordBadge) newRecordBadge.style.display = 'none';
+    if (startScreen) startScreen.classList.add('hidden'); 
+    if (gameOverScreen) gameOverScreen.classList.add('hidden');
     
     scene.background = new THREE.Color(0xbce3fc);
     if(scene.fog) scene.fog.color = new THREE.Color(0xbce3fc);
-    hemiLight.groundColor = new THREE.Color(0x96877b);
+    if(hemiLight) hemiLight.groundColor = new THREE.Color(0x96877b);
 
     updateActiveViewportLanes(0);
 
@@ -832,15 +861,17 @@ function startRunCycle() {
 function triggerDeath(deathColor) {
     gameState = 'GAMEOVER';
     
-    window.spawnEnvCubeParticles(playerMesh.position.x, 0.3, playerMesh.position.z, deathColor, 20);
-    window.spawnEnvCubeParticles(playerMesh.position.x, 0.4, playerMesh.position.z, 0xffffff, 12);
+    if (playerMesh) {
+        window.spawnEnvCubeParticles(playerMesh.position.x, 0.3, playerMesh.position.z, deathColor, 20);
+        window.spawnEnvCubeParticles(playerMesh.position.x, 0.4, playerMesh.position.z, 0xffffff, 12);
+    }
 
     isShattered = true;
     const keysToShatter = ['body', 'beak', 'comb', 'wingL', 'wingR'];
     
     keysToShatter.forEach(key => {
         const mesh = playerParts[key];
-        if(mesh) {
+        if(mesh && chickenCoreGroup) {
             const worldPos = new THREE.Vector3();
             mesh.getWorldPosition(worldPos);
             chickenCoreGroup.remove(mesh);
@@ -864,29 +895,32 @@ function triggerDeath(deathColor) {
     if (maxRowReached > globalHighScore) {
         globalHighScore = maxRowReached;
         localStorage.setItem('iso_hop_perfect_highscore', globalHighScore);
-        highScoreLabel.innerText = `BEST: ${String(globalHighScore).padStart(2, '0')}`;
+        if (highScoreLabel) {
+            highScoreLabel.innerText = `BEST: ${String(globalHighScore).padStart(2, '0')}`;
+        }
         isNewBest = true;
     }
 
-    if (isNewBest && globalHighScore > 0) {
-        newRecordBadge.style.display = 'block';
-    } else {
-        newRecordBadge.style.display = 'none';
+    if (newRecordBadge) {
+        newRecordBadge.style.display = isNewBest && globalHighScore > 0 ? 'block' : 'none';
     }
 
-    finalStats.innerText = `Lanes Crossed: ${maxRowReached} | All-Time Best: ${globalHighScore}`;
+    if (finalStats) {
+        finalStats.innerText = `Lanes Crossed: ${maxRowReached} | All-Time Best: ${globalHighScore}`;
+    }
     
     populateSkinSelector();
-    gameOverScreen.classList.remove('hidden');
+    if (gameOverScreen) gameOverScreen.classList.remove('hidden');
 }
 
 onResize = () => {
+    if (!container || !camera || !renderer) return;
     const aspect = container.clientWidth / container.clientHeight; const d = 6.0;
     camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
     camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight);
 };
 
-startButton.addEventListener('click', startRunCycle);
-restartButton.addEventListener('click', startRunCycle);
+if (startButton) startButton.addEventListener('click', startRunCycle);
+if (restartButton) restartButton.addEventListener('click', startRunCycle);
 
 initEngine();
