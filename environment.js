@@ -162,7 +162,8 @@ window.generateLane = function(z) {
         laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'desert' ? window.matDesertSand : (biome === 'cyber' ? window.matGridFloor : window.matGrass));
         laneObj.mesh.scale.set(window.COLS * 3, 1, 1);
         laneObj.mesh.position.set(0, -0.5, z);
-        laneObj.mesh.receiveShadow = true;
+        // MOBILE RE-TUNING: Removed flat ground shadow maps calculation layers to permanently defeat GPU light flickering bugs
+        laneObj.mesh.receiveShadow = false;
         window.scene.add(laneObj.mesh);
         window.lanes[z] = laneObj;
         return;
@@ -173,7 +174,7 @@ window.generateLane = function(z) {
         laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'cyber' ? new THREE.MeshStandardMaterial({color:0x111215, roughness:0.5}) : window.matRoad);
         laneObj.mesh.scale.set(window.COLS * 3, 1, 1);
         laneObj.mesh.position.set(0, -0.5, z);
-        laneObj.mesh.receiveShadow = true;
+        laneObj.mesh.receiveShadow = false;
         window.scene.add(laneObj.mesh);
 
         laneObj.markingGroup = new THREE.Group();
@@ -199,7 +200,7 @@ window.generateLane = function(z) {
         laneObj.mesh = new THREE.Mesh(window.boxGeo, waterBase);
         laneObj.mesh.scale.set(window.COLS * 3, 1.4, 1);
         laneObj.mesh.position.set(0, -0.9, z);
-        laneObj.mesh.receiveShadow = true;
+        laneObj.mesh.receiveShadow = false;
         window.scene.add(laneObj.mesh);
 
         window.riverWaterMeshes.push(laneObj.mesh);
@@ -252,7 +253,7 @@ window.generateLane = function(z) {
         laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'cyber' ? window.matGridFloor : window.matRoad);
         laneObj.mesh.scale.set(window.COLS * 3, 0.9, 1);
         laneObj.mesh.position.set(0, -0.45, z);
-        laneObj.mesh.receiveShadow = true;
+        laneObj.mesh.receiveShadow = false;
         window.scene.add(laneObj.mesh);
 
         laneObj.visualGroup = new THREE.Group();
@@ -294,7 +295,7 @@ window.generateLane = function(z) {
         laneObj.mesh = new THREE.Mesh(window.boxGeo, biome === 'desert' ? window.matDesertSand : (biome === 'cyber' ? window.matGridFloor : window.matGrass));
         laneObj.mesh.scale.set(window.COLS * 3, 1, 1);
         laneObj.mesh.position.set(0, -0.5, z);
-        laneObj.mesh.receiveShadow = true;
+        laneObj.mesh.receiveShadow = false;
         window.scene.add(laneObj.mesh);
 
         laneObj.visualGroup = new THREE.Group();
