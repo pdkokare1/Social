@@ -27,6 +27,8 @@ body {
     border-radius: 20px;
     overflow: hidden;
     transition: transform 0.05s linear; /* Smooth dynamic structural shake translations */
+    will-change: transform;
+    transform-style: preserve-3d;
 }
 canvas {
     display: block;
@@ -58,6 +60,7 @@ canvas {
     text-shadow: 0 4px 12px rgba(0,0,0,0.4);
     font-variant-numeric: tabular-nums;
     transition: transform 0.1s ease, color 0.2s;
+    will-change: transform;
 }
 #highScoreLabel {
     font-size: 14px;
