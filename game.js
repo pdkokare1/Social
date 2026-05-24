@@ -300,6 +300,7 @@ function processInputQueue() {
     updateActiveViewportLanes(nextZ);
     
     const targetLane = lanes[nextZ];
+    // CRITICAL COLLISION FIX: Explicitly check for generated obstacles (trees & rocks) on grass lanes matching the next grid index
     if (targetLane) {
         if (targetLane.obstacles && targetLane.obstacles[nextX] === true) return;
     }
