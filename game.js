@@ -115,7 +115,7 @@ function initEngine() {
     window.maxRowReached = maxRowReached;
     window.playerMesh = playerMesh;
     window.playerGridX = playerGridX;
-    window.playerGridZ = playerGridZ;
+    window.windowPlayerGridZ = playerGridZ;
     window.currentComboMultiplier = currentComboMultiplier;
 
     const aspect = container ? container.clientWidth / container.clientHeight : window.innerWidth / window.innerHeight;
@@ -144,9 +144,9 @@ function initEngine() {
     sunLight.shadow.mapSize.width = 1024; 
     sunLight.shadow.mapSize.height = 1024;
     
-    // DEEP PRECISION RE-TUNING: Pushing shadow offsets deeper removes landscape line flickering perfectly
-    sunLight.shadow.bias = -0.0015;
-    sunLight.shadow.normalBias = 0.08;
+    // Balanced shadow bias metrics preserve mesh quality while eliminating noise lines
+    sunLight.shadow.bias = -0.0006;
+    sunLight.shadow.normalBias = 0.04;
     
     scene.add(sunLight);
 
@@ -796,8 +796,14 @@ function updateGameLogic(delta) {
 
     if (sunLight && camera) {
         let sunRotationAngle = timeTotal * 0.05 + (maxRowReached * 0.01);
-        sunLight.position.x = Math.round(camera.position.x) + Math.cos(sunRotationAngle) * 12 + 5; 
-        sunLight.position.z = Math.round(camera.position.z) + Math.sin(sunRotationAngle) * 12;
+        
+        // TEXEL SNAPPING: Snap shadow camera strictly to discrete mathematical boundaries during player steps
+        // This removes sub-pixel sliding and completely kills motion-based terrain shimmering
+        let snapX = Math.floor(camera.position.x * 4) / 4;
+        let snapZ = Math.floor(camera.position.z * 4) / 4;
+        
+        sunLight.position.x = snapX + Math.cos(sunRotationAngle) * 12 + 5; 
+        sunLight.position.z = snapZ + Math.sin(sunRotationAngle) * 12;
         sunLight.position.y = 18 + Math.abs(Math.sin(sunRotationAngle)) * 8;
     }
 
