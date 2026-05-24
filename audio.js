@@ -13,6 +13,9 @@ window.initAudio = function() {
     if (!window.audioCtx) {
         window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if (window.audioCtx.state === 'suspended') {
+        window.audioCtx.resume();
+    }
     // Polish Addition: Fire low-overhead background track loop safely upon first engine interaction
     if (window.soundEnabled && !window.ambientOsc1) {
         window.startAmbientLoop();
@@ -57,10 +60,16 @@ window.startAmbientLoop = function() {
 window.updateAmbientFilters = function(state) {
     if (!window.audioCtx || !window.ambientFilter || !window.soundEnabled) return;
     const now = window.audioCtx.currentTime;
-    if (state === 'underwater') {
-        window.ambientFilter.frequency.exponentialRampToValueAtTime(280, now + 0.3);
-    } else {
-        window.ambientFilter.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+    try {
+        if (state === 'underwater') {
+            window.ambientFilter.frequency.exponentialRampToValueAtTime(280, now + 0.3);
+        } else {
+            window.ambientFilter.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+        }
+    } catch (e) {
+        if (window.ambientFilter && window.ambientFilter.frequency) {
+            window.ambientFilter.frequency.setValueAtTime(state === 'underwater' ? 280 : 1200, now);
+        }
     }
 };
 
@@ -138,20 +147,25 @@ window.playSynthSound = function(type) {
 
 // Toggle Sound Handler wrapped inside DOMContentLoaded listener to guarantee initialization safety
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('audioToggle').addEventListener('click', () => {
-        window.soundEnabled = !window.soundEnabled;
-        document.getElementById('audioToggle').innerText = window.soundEnabled ? '🔊' : '🔇';
-        
-        // Handle physical hardware muting hooks fluidly
-        if (!window.soundEnabled) {
-            if (window.ambientGain) { window.ambientGain.gain.setValueAtTime(0, window.audioCtx.currentTime); }
-        } else {
-            if (!window.ambientOsc1) {
-                window.initAudio();
-            } else if (window.ambientGain) {
-                window.ambientGain.gain.setValueAtTime(0.002, window.audioCtx.currentTime);
+    const toggleBtn = document.getElementById('audioToggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            window.soundEnabled = !window.soundEnabled;
+            toggleBtn.innerText = window.soundEnabled ? '🔊' : '🔇';
+            
+            // Handle physical hardware muting hooks fluidly
+            if (!window.soundEnabled) {
+                if (window.ambientGain && window.audioCtx) { 
+                    window.ambientGain.gain.setValueAtTime(0, window.audioCtx.currentTime); 
+                }
+            } else {
+                if (!window.ambientOsc1) {
+                    window.initAudio();
+                } else if (window.ambientGain && window.audioCtx) {
+                    window.ambientGain.gain.setValueAtTime(0.002, window.audioCtx.currentTime);
+                }
             }
-        }
-        window.initAudio();
-    });
+            window.initAudio();
+        });
+    }
 });
