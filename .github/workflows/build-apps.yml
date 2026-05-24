@@ -27,15 +27,11 @@ jobs:
       - name: Install Capacitor Core Dependencies
         run: npm install
 
-      # DYNAMIC ASSET COMPILATION STEP: Creates a clean child directory and stages assets to bypass the path validation restriction
+      # FIX: Corrected directory generation flag to -p and used a secure wildcard to aggregate all core game engine code together
       - name: Stage Production Build Folder
         run: |
-          mkdir -id www
-          cp index.html www/
-          cp style.css www/
-          cp game.js www/
-          cp environment.js www/
-          cp audio.js www/
+          mkdir -p www
+          cp index.html style.css *.js www/
 
       - name: Initialize Capacitor Configuration Shell
         run: npx cap init "Voxel Hopper" "com.thegamut.voxelhopper" --web-dir=www
