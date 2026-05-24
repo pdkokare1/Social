@@ -5,14 +5,14 @@ window.START_COL = 10000;
 // Shared Geometry
 window.boxGeo = new THREE.BoxGeometry(1, 1, 1);
 
-/* GRAPHICS ENGINE UPGRADE: Converted from basic flat MeshLambert to physically responsive MeshStandardMaterial blocks */
-window.matGrass = new THREE.MeshStandardMaterial({ color: 0x4fa642, roughness: 0.6, metalness: 0.1, flatShading: true });
-window.matGrassDark = new THREE.MeshStandardMaterial({ color: 0x438f38, roughness: 0.6, metalness: 0.1, flatShading: true });
+/* GRAPHICS ENGINE UPGRADE: Floor meshes switched to smooth rendering to prevent mobile edge pixelation */
+window.matGrass = new THREE.MeshStandardMaterial({ color: 0x4fa642, roughness: 0.6, metalness: 0.1, flatShading: false });
+window.matGrassDark = new THREE.MeshStandardMaterial({ color: 0x438f38, roughness: 0.6, metalness: 0.1, flatShading: false });
 window.matFlowerRed = new THREE.MeshStandardMaterial({ color: 0xe23b3b, roughness: 0.7, flatShading: true });
 window.matFlowerYellow = new THREE.MeshStandardMaterial({ color: 0xeed23b, roughness: 0.7, flatShading: true });
-window.matRoad = new THREE.MeshStandardMaterial({ color: 0x282a30, roughness: 0.85, metalness: 0.2, flatShading: true });
-window.matWater = new THREE.MeshStandardMaterial({ color: 0x1d5ec2, roughness: 0.15, metalness: 0.4, flatShading: true, transparent: true, opacity: 0.88 });
-window.matWaterDark = new THREE.MeshStandardMaterial({ color: 0x164ba1, roughness: 0.15, metalness: 0.4, flatShading: true, transparent: true, opacity: 0.88 });
+window.matRoad = new THREE.MeshStandardMaterial({ color: 0x282a30, roughness: 0.85, metalness: 0.2, flatShading: false });
+window.matWater = new THREE.MeshStandardMaterial({ color: 0x1d5ec2, roughness: 0.15, metalness: 0.4, flatShading: false, transparent: true, opacity: 0.88 });
+window.matWaterDark = new THREE.MeshStandardMaterial({ color: 0x164ba1, roughness: 0.15, metalness: 0.4, flatShading: false, transparent: true, opacity: 0.88 });
 window.matLily = new THREE.MeshStandardMaterial({ color: 0x298a4e, roughness: 0.6, flatShading: true });
 window.matTreeLeaves = new THREE.MeshStandardMaterial({ color: 0x1b612c, roughness: 0.65, flatShading: true });
 window.matTreeLeavesLight = new THREE.MeshStandardMaterial({ color: 0x247c3a, roughness: 0.65, flatShading: true });
@@ -30,10 +30,10 @@ window.matSignalTail = new THREE.MeshBasicMaterial({ color: 0xff3344 });
 window.matIronDark = new THREE.MeshStandardMaterial({ color: 0x444852, roughness: 0.5, metalness: 0.5, flatShading: true });
 
 // Biome Specific Procedural Material Profiles
-window.matDesertSand = new THREE.MeshStandardMaterial({ color: 0xdfd3a2, roughness: 0.9, metalness: 0.05, flatShading: true });
+window.matDesertSand = new THREE.MeshStandardMaterial({ color: 0xdfd3a2, roughness: 0.9, metalness: 0.05, flatShading: false });
 window.matCactusBody = new THREE.MeshStandardMaterial({ color: 0x376e31, roughness: 0.7, flatShading: true });
 window.matDesertShrub = new THREE.MeshStandardMaterial({ color: 0x8a8463, roughness: 0.8, flatShading: true });
-window.matGridFloor = new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.4, metalness: 0.3, flatShading: true });
+window.matGridFloor = new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.4, metalness: 0.3, flatShading: false });
 window.matGridMonolith = new THREE.MeshStandardMaterial({ color: 0x0a0b0d, roughness: 0.2, metalness: 0.8, flatShading: true });
 window.matGridNeonBlue = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
 window.matGridNeonPink = new THREE.MeshBasicMaterial({ color: 0xff0055 });
@@ -101,7 +101,6 @@ window.spawnFloatingIndicator = function(textStr, colorHexStr) {
 
 // Polish Addition: Global loop updating natural swaying vegetation and rolling tumbleweeds
 window.updateEnvironmentAnimations = function(delta, time) {
-    // Math loop waving high detail tree leaf segments seamlessly
     window.swayingTrees.forEach(leafMesh => {
         if (leafMesh && leafMesh.parent) {
             leafMesh.rotation.z = Math.sin(time * 2.2 + leafMesh.position.x) * 0.03;
@@ -109,7 +108,6 @@ window.updateEnvironmentAnimations = function(delta, time) {
         }
     });
 
-    // Animate rolling tumbleweeds down sand channels
     for (let i = window.tumbleweeds.length - 1; i >= 0; i--) {
         const tw = window.tumbleweeds[i];
         if (tw && tw.mesh && tw.mesh.parent) {
@@ -126,7 +124,6 @@ window.updateEnvironmentAnimations = function(delta, time) {
         }
     }
 
-    // VISUAL JUICE UPGRADE: Smooth sinusoidal liquid wave scale and position displacement for active river segments
     if (window.riverWaterMeshes) {
         for (let j = window.riverWaterMeshes.length - 1; j >= 0; j--) {
             const waterMesh = window.riverWaterMeshes[j];
@@ -138,7 +135,6 @@ window.updateEnvironmentAnimations = function(delta, time) {
         }
     }
 
-    // INTERACTIVE JUICE UPGRADE: Rotate and hover collectible star coins programmatically
     if (window.activeStarCoins) {
         Object.keys(window.activeStarCoins).forEach(key => {
             const coinMesh = window.activeStarCoins[key];
@@ -159,7 +155,6 @@ window.generateLane = function(z) {
     const laneObj = { type: '', mesh: null, obstacles: {} };
     const biome = window.getBiomeType(z);
 
-    // ADAPTIVE DIFFICULTY TUNING: Scales vehicle intervals based on progression parameters
     let speedScalar = 1.0 + Math.min(window.maxRowReached * 0.005, 0.45);
     let spaceScalar = 1.0 + Math.min(window.maxRowReached * 0.007, 0.50);
 
@@ -194,9 +189,9 @@ window.generateLane = function(z) {
         let lineMat = biome === 'cyber' ? window.matGridNeonPink : window.matWhiteMarking;
         for (let i = -60; i < 60; i += 4) {
             const mark = new THREE.Mesh(window.boxGeo, lineMat);
-            // Height micro-offset to eliminate z-fighting pixelation
+            // Height micro-offset elevated to completely resolve low precision mobile layout Z-fighting
             mark.scale.set(0.5, 0.02, 0.06);
-            mark.position.set(i, 0.011, z);
+            mark.position.set(i, 0.03, z);
             laneObj.markingGroup.add(mark);
         }
 
@@ -219,9 +214,9 @@ window.generateLane = function(z) {
         let darkBand = biome === 'cyber' ? window.matGridNeonBlue : window.matWaterDark;
         for(let i = -60; i < 60; i += 8) {
             const band = new THREE.Mesh(window.boxGeo, darkBand);
-            // Height micro-offset to eliminate z-fighting pixelation
             band.scale.set(4.0, 0.02, biome === 'cyber' ? 0.05 : 1.002);
-            band.position.set(i + (Math.random() * 2), biome === 'cyber' ? 0.011 : -0.13, z);
+            // Raised to prevent immersion overlapping artifacts
+            band.position.set(i + (Math.random() * 2), biome === 'cyber' ? 0.03 : -0.05, z);
             laneObj.foamGroup.add(band);
         }
 
@@ -229,12 +224,13 @@ window.generateLane = function(z) {
             if(Math.random() > 0.4 && biome !== 'cyber') {
                 const lily = new THREE.Mesh(window.boxGeo, window.matLily);
                 lily.scale.set(0.4, 0.02, 0.4);
-                lily.position.set(i + (Math.random() * 3), -0.12, z + (Math.random() - 0.5) * 0.4);
+                // Elevated surface tracking
+                lily.position.set(i + (Math.random() * 3), -0.04, z + (Math.random() - 0.5) * 0.4);
                 laneObj.foamGroup.add(lily);
                 
                 laneObj.lilies.push({
                     mesh: lily,
-                    initialY: -0.12,
+                    initialY: -0.04,
                     sinkProgress: 0,
                     isStepped: false
                 });
@@ -250,7 +246,7 @@ window.generateLane = function(z) {
             for (let i = -3; i < 4; i++) {
                 const foam = new THREE.Mesh(window.boxGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 }));
                 foam.scale.set(1.6, 0.01, 0.8);
-                foam.position.set(i * 8, -0.12, z);
+                foam.position.set(i * 8, -0.04, z);
                 laneObj.foamGroup.add(foam);
             }
         }
