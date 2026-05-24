@@ -58,7 +58,7 @@ const SKINS = [
     { id: 'chicken', name: 'Chicken', icon: '🐔', cost: 0 },
     { id: 'cyber', name: 'Cyber', icon: '🤖', cost: 250 },
     { id: 'frog', name: 'Frog', icon: '🐸', cost: 750 },
-    { id: 'golden', name: 'Gold', icon: '🏆', cost: 1500 }
+    { id: 'golden', name: 'Gold', icon: '👑', cost: 1500 }
 ];
 
 // GC Optimization Cache Objects
@@ -142,7 +142,11 @@ function initEngine() {
     sunLight.shadow.camera.bottom = -20;
     sunLight.shadow.mapSize.width = 1024; 
     sunLight.shadow.mapSize.height = 1024;
-    sunLight.shadow.bias = -0.0005;
+    
+    // BIAS MODIFICATIONS: Offset properties optimized to terminate shadow acne artifacts on mobile
+    sunLight.shadow.bias = -0.0002;
+    sunLight.shadow.normalBias = 0.02;
+    
     scene.add(sunLight);
 
     buildPlayer();
@@ -374,7 +378,6 @@ function processInputQueue() {
     }
 }
 
-// Polish Addition: Generate short-lived transparent mesh clones matching the active skin
 function spawnGhostTrailEcho() {
     if (!playerParts.body || !playerMesh) return;
     const trailGroup = new THREE.Group();
@@ -404,7 +407,6 @@ function updateActiveViewportLanes(centerZ) {
         if (!lanes[z]) {
             window.generateLane(z);
         } else if (lanes[z].type === 'grass') {
-            // Broad procedural lookahead sweep prevents invisible walls during lateral traversal
             window.ensureObstaclesGeneratedForRange(lanes[z], z, playerGridX - 150, playerGridX + 150);
         }
     }
@@ -414,7 +416,6 @@ function updateActiveViewportLanes(centerZ) {
         if (z < minZ || z > maxZ) {
             const lane = lanes[z];
             
-            // REUSE SYSTEM CHECKOUT: Push children objects from lane visualGroups back into pool safely rather than removing them
             if (lane.visualGroup && lane.visualGroup.children) {
                 for (let i = lane.visualGroup.children.length - 1; i >= 0; i--) {
                     const obj = lane.visualGroup.children[i];
@@ -447,7 +448,6 @@ function updateActiveViewportLanes(centerZ) {
     });
 }
 
-// Systemic Improvement: Central Physics Tick decoupled completely from variable layout frame lag
 function updateFixedPhysicsStep(fixedDelta) {
     const timeTotal = clock.getElapsedTime();
     const speedModifier = fixedDelta * 60;
@@ -529,7 +529,6 @@ function updateFixedPhysicsStep(fixedDelta) {
         
         window.playSynthSound('score');
         
-        // REFINED LIGHTING JUICE: Blend core sun directional light color and intensities alongside ambient biomes
         if(maxRowReached < 40) {
             cacheSkyColor.setHex(0xbce3fc);
             cacheFogColor.setHex(0xbce3fc);
@@ -571,7 +570,6 @@ function updateFixedPhysicsStep(fixedDelta) {
         if (sunLight) sunLight.color = cacheSunColor;
     }
 
-    // STAR COIN INTERACTION CAPTURE: Structural collision cross-checks for stepping on grid-aligned coin coordinates
     if (playerMesh && !isJumping) {
         const checkKey = `${playerGridX - window.START_COL}_${playerGridZ}`;
         if (window.activeStarCoins && window.activeStarCoins[checkKey]) {
@@ -580,7 +578,7 @@ function updateFixedPhysicsStep(fixedDelta) {
             delete window.activeStarCoins[checkKey];
             
             window.playSynthSound('coin');
-            window.spawnFloatingIndicator('+1 ⭐', '#ffd700');
+            window.spawnFloatingIndicator('+1 🪙', '#ffd700');
             
             let totalSavedCoins = parseInt(localStorage.getItem('iso_hop_star_coins')) || 0;
             localStorage.setItem('iso_hop_star_coins', totalSavedCoins + 1);
@@ -591,7 +589,6 @@ function updateFixedPhysicsStep(fixedDelta) {
     const maxZ = playerGridZ + 14;
     const currentCenterX = playerMesh ? Math.round(playerMesh.position.x) : 0;
 
-    // Polish Addition: Reset background audio filter parameters to standard profile
     let hasActiveRailwayHazard = false;
 
     for (let z = minZ; z <= maxZ; z++) {
@@ -645,7 +642,6 @@ function updateFixedPhysicsStep(fixedDelta) {
                 }
             }
             
-            // Dynamic progressive sinking checks for stepping on standalone lilypads
             if (playerMesh && lane.lilies && playerGridZ === z && !isJumping) {
                 lane.lilies.forEach(lily => {
                     if (Math.abs((lily.mesh.position.x) - playerMesh.position.x) < 0.5) {
@@ -678,7 +674,6 @@ function updateFixedPhysicsStep(fixedDelta) {
                 window.playSynthSound('splash');
                 cameraShakeIntensity = 0.18;
                 
-                /* POLISH ADDITION: Drop background synth track pitch thresholds down when submerged */
                 if (window.updateAmbientFilters) {
                     window.updateAmbientFilters('underwater');
                 }
@@ -703,8 +698,6 @@ function updateFixedPhysicsStep(fixedDelta) {
             } else {
                 if (lane.warningTimer > 0) {
                     lane.warningTimer -= speedModifier;
-                    
-                    // THREAT HAZARD NOTIFICATION: Register active hazard countdown state
                     hasActiveRailwayHazard = true;
 
                     if (Math.floor(lane.warningTimer) % 15 === 0) {
@@ -726,10 +719,7 @@ function updateFixedPhysicsStep(fixedDelta) {
                 
                 if (playerMesh && playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
                     window.playSynthSound('crash_train');
-                    
-                    /* POLISH ADDITION: Multiply impact smash physical vibration vectors on heavy train crash profiles */
                     cameraShakeIntensity = 0.75; 
-                    
                     triggerDeath(0xff0044); 
                     return; 
                 }
@@ -746,7 +736,6 @@ function updateFixedPhysicsStep(fixedDelta) {
         }
     }
 
-    // AUDIO CONTEXT MODULATION OVERLAY: Adapt filter layers based on near-miss threats
     if (window.updateAmbientFilters) {
         if (hasActiveRailwayHazard) {
             window.updateAmbientFilters('hazard');
@@ -770,7 +759,6 @@ function updateFixedPhysicsStep(fixedDelta) {
 function updateGameLogic(delta) {
     const timeTotal = clock.getElapsedTime();
 
-    // Physics Frame-Lag Isolation Accumulator loop 
     physicsAccumulator += Math.min(delta, 0.1);
     while (physicsAccumulator >= FIXED_PHYSICS_STEP) {
         if (gameState === 'PLAYING' || isShattered) {
@@ -779,15 +767,13 @@ function updateGameLogic(delta) {
         physicsAccumulator -= FIXED_PHYSICS_STEP;
     }
 
-    // Polish Addition: Safe lifecycle management tracking swaying elements
     if (window.updateEnvironmentAnimations) {
         window.updateEnvironmentAnimations(delta, timeTotal);
     }
 
-    // Polish Addition: Decay loop handling active combo trail shadows
     for (let i = ghostTrailObjects.length - 1; i >= 0; i--) {
         const tr = ghostTrailObjects[i];
-        tr.life -= delta * 5.0; // Rapid clean alpha blend fade
+        tr.life -= delta * 5.0; 
         if (tr.life <= 0) {
             scene.remove(tr.mesh);
             ghostTrailObjects.splice(i, 1);
@@ -798,7 +784,6 @@ function updateGameLogic(delta) {
         }
     }
 
-    // Camera Structural Shake Decay Interpolations
     if (cameraShakeIntensity > 0 && container) {
         cameraShakeIntensity -= delta * 2.5;
         let sx = (Math.random() - 0.5) * cameraShakeIntensity;
@@ -810,7 +795,6 @@ function updateGameLogic(delta) {
     if (gameState !== 'PLAYING') return;
     const speedModifier = delta * 60;
 
-    /* GRAPHICS PROGRESSION UPGRADE: Fluid Time-of-Day sun axis angle tracking based on player step milestones */
     if (sunLight && camera) {
         let sunRotationAngle = timeTotal * 0.05 + (maxRowReached * 0.01);
         sunLight.position.x = Math.round(camera.position.x) + Math.cos(sunRotationAngle) * 12 + 5; 
@@ -835,7 +819,6 @@ function purgeSceneObjects() {
     Object.keys(lanes).forEach(z => {
         const lane = lanes[z]; 
         
-        // Return active pooled environmental elements cleanly during world reconstruction
         if (lane.visualGroup && lane.visualGroup.children) {
             for (let i = lane.visualGroup.children.length - 1; i >= 0; i--) {
                 const obj = lane.visualGroup.children[i];
