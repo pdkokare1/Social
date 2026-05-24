@@ -127,7 +127,6 @@ function initEngine() {
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
     if (container) renderer.setSize(container.clientWidth, container.clientHeight);
     
-    // UNLOCKED PIXEL RATIO: Capping removed to activate beautiful native resolution on high-DPI smartphone screen arrays
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -145,9 +144,9 @@ function initEngine() {
     sunLight.shadow.mapSize.width = 1024; 
     sunLight.shadow.mapSize.height = 1024;
     
-    // PRECISION ADJUSTMENTS: Optimized offsets eliminate surface acne shadow lines on mobile browsers completely
-    sunLight.shadow.bias = -0.0004;
-    sunLight.shadow.normalBias = 0.05;
+    // DEEP PRECISION RE-TUNING: Pushing shadow offsets deeper removes landscape line flickering perfectly
+    sunLight.shadow.bias = -0.0015;
+    sunLight.shadow.normalBias = 0.08;
     
     scene.add(sunLight);
 
