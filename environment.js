@@ -48,8 +48,8 @@ window.matWinPool = new THREE.MeshBasicMaterial({ color: 0x222b35 });
 window.matWinFrontPool = new THREE.MeshBasicMaterial({ color: 0xccf5ff });
 window.matParticleBase = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 });
 
-// Neon Projection Volumetric Visual Presets
-window.matHeadlightCone = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.15, flatShading: true });
+// Neon Projection Volumetric Visual Presets - Removed invalid flatShading property
+window.matHeadlightCone = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.15 });
 
 // Polish Addition: Dynamic material handles to track procedural swaying structures
 window.swayingTrees = [];
@@ -280,6 +280,8 @@ window.generateLane = function(z) {
 };
 
 window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
+    // CRITICAL FIX: Gracefully exit if the requested viewport lane or its active graphics group isn't initialized yet
+    if (!lane || !lane.visualGroup) return;
     if (!lane.obstacles) lane.obstacles = {};
     const biome = window.getBiomeType(z);
     
