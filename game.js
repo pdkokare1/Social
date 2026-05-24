@@ -46,6 +46,9 @@ let lastForwardHopTime = 0;
 let forwardComboCount = 0;
 let currentComboMultiplier = 1;
 
+// Polish Addition: Trailing mesh pool variables to process high speed motion blur shadows
+let ghostTrailObjects = [];
+
 // Skin Variant Definitions & Local Storage Locks - Restored Unicode Emojis
 const SKINS = [
     { id: 'chicken', name: 'Chicken', icon: '🐔', cost: 0 },
@@ -214,9 +217,9 @@ function rebuildPlayerSkin() {
         combMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, emissive: 0x00f3ff, emissiveIntensity: 0.8 });
         eyeMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
     } else if (selectedSkin === 'frog') {
-        bodyMat = new THREE.MeshLambertMaterial({ color: 0x5cb83b, flatShading: true });
-        beakMat = new THREE.MeshLambertMaterial({ color: 0xffe600, flatShading: true });
-        combMat = new THREE.MeshLambertMaterial({ color: 0x3d8225, flatShading: true });
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0x5cb83b, roughness: 0.5, flatShading: true });
+        beakMat = new THREE.MeshStandardMaterial({ color: 0xffe600, roughness: 0.5, flatShading: true });
+        combMat = new THREE.MeshStandardMaterial({ color: 0x3d8225, roughness: 0.5, flatShading: true });
         eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     } else if (selectedSkin === 'golden') {
         bodyMat = new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.1, metalness: 0.9, flatShading: true });
@@ -224,9 +227,9 @@ function rebuildPlayerSkin() {
         combMat = new THREE.MeshStandardMaterial({ color: 0xdd2222, roughness: 0.2, metalness: 0.4, flatShading: true });
         eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
     } else {
-        bodyMat = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
-        beakMat = new THREE.MeshLambertMaterial({ color: 0xffa500, flatShading: true });
-        combMat = new THREE.MeshLambertMaterial({ color: 0xdd2222, flatShading: true });
+        bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, flatShading: true });
+        beakMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness: 0.6, flatShading: true });
+        combMat = new THREE.MeshStandardMaterial({ color: 0xdd2222, roughness: 0.6, flatShading: true });
         eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
     }
 
@@ -274,6 +277,11 @@ function setupInputSystems() {
 
 function queueMove(dx, dz) {
     if (gameState !== 'PLAYING' || isShattered) return;
+    
+    /* EXPERIMENTAL KINEMATICS: Trigger anticipatory squish-flatten frame right on keystroke down */
+    squishX = 1.35; squishY = 0.45; squishZ = 1.35;
+    chickenCoreGroup.scale.set(squishX, squishY, squishZ);
+
     inputBuffer = { dx, dz };
     if (!isJumping) processInputQueue();
 }
@@ -349,6 +357,33 @@ function processInputQueue() {
     squishX = 0.82 / intensityFactor; squishY = 1.22 * intensityFactor; squishZ = 0.82 / intensityFactor;
     
     window.playSynthSound('jump');
+
+    /* POLISH ADDITION: Generate ghost blur footprint shadows if running on maximum streak rates */
+    if (currentComboMultiplier >= 3) {
+        spawnGhostTrailEcho();
+    }
+}
+
+// Polish Addition: Generate short-lived transparent mesh clones matching the active skin
+function spawnGhostTrailEcho() {
+    if (!playerParts.body) return;
+    const trailGroup = new THREE.Group();
+    trailGroup.position.copy(playerMesh.position);
+    trailGroup.rotation.copy(playerMesh.rotation);
+    
+    const ghostMat = new THREE.MeshBasicMaterial({
+        color: selectedSkin === 'cyber' ? 0x00f3ff : (selectedSkin === 'golden' ? 0xffcc00 : 0xffffff),
+        transparent: true,
+        opacity: 0.45
+    });
+
+    const ghostBody = new THREE.Mesh(window.boxGeo, ghostMat);
+    ghostBody.scale.copy(playerParts.body.scale);
+    ghostBody.position.copy(playerParts.body.position);
+    trailGroup.add(ghostBody);
+
+    scene.add(trailGroup);
+    ghostTrailObjects.push({ mesh: trailGroup, life: 1.0 });
 }
 
 function updateActiveViewportLanes(centerZ) {
@@ -387,6 +422,27 @@ function updateActiveViewportLanes(centerZ) {
 }
 
 function updateGameLogic(delta) {
+    const timeTotal = clock.getElapsedTime();
+
+    // Polish Addition: Safe lifecycle management tracking swaying elements
+    if (window.updateEnvironmentAnimations) {
+        window.updateEnvironmentAnimations(delta, timeTotal);
+    }
+
+    // Polish Addition: Decay loop handling active combo trail shadows
+    for (let i = ghostTrailObjects.length - 1; i >= 0; i--) {
+        const tr = ghostTrailObjects[i];
+        tr.life -= delta * 5.0; // Rapid clean alpha blend fade
+        if (tr.life <= 0) {
+            scene.remove(tr.mesh);
+            ghostTrailObjects.splice(i, 1);
+        } else {
+            tr.mesh.children.forEach(child => {
+                if (child.material) child.material.opacity = tr.life * 0.4;
+            });
+        }
+    }
+
     if (isShattered) {
         let speedMod = delta * 60;
         shatteredParts.forEach(p => {
@@ -400,6 +456,11 @@ function updateGameLogic(delta) {
             if (p.mesh.position.y < 0.1) {
                 p.mesh.position.y = 0.1;
                 p.vy = -p.vy * 0.5;
+                
+                // Polish Addition: Spawn miniature ground crash impact points
+                if (Math.abs(p.vx) > 0.02) {
+                    window.spawnEnvCubeParticles(p.mesh.position.x, 0.11, p.mesh.position.z, 0xff4444, 1);
+                }
             }
         });
     }
@@ -517,15 +578,23 @@ function updateGameLogic(delta) {
         hemiLight.groundColor = cacheGroundColor;
     }
 
+    /* GRAPHICS PROGRESSION UPGRADE: Fluid Time-of-Day sun axis angle tracking based on player step milestones */
+    let sunRotationAngle = timeTotal * 0.05 + (maxRowReached * 0.01);
+    sunLight.position.x = Math.round(camera.position.x) + Math.cos(sunRotationAngle) * 12 + 5; 
+    sunLight.position.z = Math.round(camera.position.z) + Math.sin(sunRotationAngle) * 12;
+    sunLight.position.y = 18 + Math.abs(Math.sin(sunRotationAngle)) * 8;
+
     camera.position.x += ((playerMesh.position.x + 8.5) - camera.position.x) * 0.08 * speedModifier;
     camera.position.z += ((playerMesh.position.z + 8.5) - camera.position.z) * 0.08 * speedModifier;
-    
-    sunLight.position.x = Math.round(camera.position.x) + 5; 
-    sunLight.position.z = Math.round(camera.position.z);
 
     const minZ = Math.max(0, playerGridZ - 6);
     const maxZ = playerGridZ + 14;
     const currentCenterX = Math.round(playerMesh.position.x);
+
+    // Polish Addition: Reset background audio filter parameters to standard profile
+    if (window.updateAmbientFilters) {
+        window.updateAmbientFilters('normal');
+    }
 
     for (let z = minZ; z <= maxZ; z++) {
         const lane = lanes[z];
@@ -610,6 +679,12 @@ function updateGameLogic(delta) {
             if (playerGridZ === z && !isJumping && !ridingLog) { 
                 window.playSynthSound('splash');
                 cameraShakeIntensity = 0.18;
+                
+                /* POLISH ADDITION: Drop background synth track pitch thresholds down when submerged */
+                if (window.updateAmbientFilters) {
+                    window.updateAmbientFilters('underwater');
+                }
+
                 triggerDeath(0x3399ff); 
                 return; 
             }
@@ -650,7 +725,10 @@ function updateGameLogic(delta) {
                 
                 if (playerGridZ === z && Math.abs(train.position.x - playerMesh.position.x) < 5.5) { 
                     window.playSynthSound('crash_train');
-                    cameraShakeIntensity = 0.65; 
+                    
+                    /* POLISH ADDITION: Multiply impact smash physical vibration vectors on heavy train crash profiles */
+                    cameraShakeIntensity = 0.75; 
+                    
                     triggerDeath(0xff0044); 
                     return; 
                 }
