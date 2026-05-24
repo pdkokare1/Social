@@ -27,7 +27,6 @@ jobs:
       - name: Install Capacitor Core Dependencies
         run: npm install
 
-      # FIX: Corrected directory generation flag to -p and used a secure wildcard to aggregate all core game engine code together
       - name: Stage Production Build Folder
         run: |
           mkdir -p www
@@ -50,15 +49,16 @@ jobs:
       - name: Setup Android SDK Build Tools
         uses: android-actions/setup-android@v3
 
+      # FIX: Switched from assembleRelease to assembleDebug to auto-inject a signature valid for local phone testing
       - name: Compile Native Android Package (APK)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleDebug
 
       - name: Upload Downloadable Application Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: VoxelHopper-Android-Release
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: VoxelHopper-Android-Debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
