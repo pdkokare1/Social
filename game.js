@@ -300,9 +300,8 @@ function processInputQueue() {
     updateActiveViewportLanes(nextZ);
     
     const targetLane = lanes[nextZ];
-    // CRITICAL COLLISION FIX: Explicitly expand obstacle generation scope if moving sideways into new un-generated columns
     if (targetLane && targetLane.type === 'grass') {
-        window.ensureObstaclesGeneratedForRange(targetLane, nextZ, nextX - 5, nextX + 5);
+        window.ensureObstaclesGeneratedForRange(targetLane, nextZ, nextX - 10, nextX + 10);
         if (targetLane.obstacles && targetLane.obstacles[nextX] === true) return;
     }
 
@@ -395,7 +394,6 @@ function updateActiveViewportLanes(centerZ) {
         if (!lanes[z]) {
             window.generateLane(z);
         } else if (lanes[z].type === 'grass') {
-            // Ensure obstacles are generated dynamically around the player's horizontal position
             window.ensureObstaclesGeneratedForRange(lanes[z], z, playerGridX - 35, playerGridX + 35);
         }
     }
