@@ -2,10 +2,65 @@
 window.audioCtx = null;
 window.soundEnabled = true;
 
+// Programmatic Procedural Soundtrack Parameter Registries
+window.ambientOsc1 = null;
+window.ambientOsc2 = null;
+window.ambientGain = null;
+window.ambientFilter = null;
+
 // Synthesize Sound Effects Programmatically via Web Audio API
 window.initAudio = function() {
     if (!window.audioCtx) {
         window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Polish Addition: Fire low-overhead background track loop safely upon first engine interaction
+    if (window.soundEnabled && !window.ambientOsc1) {
+        window.startAmbientLoop();
+    }
+};
+
+// Polish Addition: Programmatic generation of non-intrusive interactive sound loops
+window.startAmbientLoop = function() {
+    if (!window.audioCtx || !window.soundEnabled) return;
+    try {
+        const now = window.audioCtx.currentTime;
+        
+        window.ambientFilter = window.audioCtx.createBiquadFilter();
+        window.ambientFilter.type = 'lowpass';
+        window.ambientFilter.frequency.setValueAtTime(1200, now);
+
+        window.ambientGain = window.audioCtx.createGain();
+        window.ambientGain.gain.setValueAtTime(0.04, now); // Retain perfect mix balance
+
+        // Synthesize soft rhythm chords programmatically
+        window.ambientOsc1 = window.audioCtx.createOscillator();
+        window.ambientOsc1.type = 'triangle';
+        window.ambientOsc1.frequency.setValueAtTime(110, now); // Low A hum
+        
+        window.ambientOsc2 = window.audioCtx.createOscillator();
+        window.ambientOsc2.type = 'sine';
+        window.ambientOsc2.frequency.setValueAtTime(165, now); // E perfect fifth chord layer
+
+        window.ambientOsc1.connect(window.ambientFilter);
+        window.ambientOsc2.connect(window.ambientFilter);
+        window.ambientFilter.connect(window.ambientGain);
+        window.ambientGain.connect(window.audioCtx.destination);
+
+        window.ambientOsc1.start(now);
+        window.ambientOsc2.start(now);
+    } catch(err) {
+        console.warn("Ambient Audio engine deferred", err);
+    }
+};
+
+// Polish Addition: Fluidly sweep sound filters down if the player sinks into a river biome lane
+window.updateAmbientFilters = function(state) {
+    if (!window.audioCtx || !window.ambientFilter || !window.soundEnabled) return;
+    const now = window.audioCtx.currentTime;
+    if (state === 'underwater') {
+        window.ambientFilter.frequency.exponentialRampToValueAtTime(280, now + 0.3);
+    } else {
+        window.ambientFilter.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
     }
 };
 
@@ -86,6 +141,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('audioToggle').addEventListener('click', () => {
         window.soundEnabled = !window.soundEnabled;
         document.getElementById('audioToggle').innerText = window.soundEnabled ? '🔊' : '🔇';
+        
+        // Handle physical hardware muting hooks fluidly
+        if (!window.soundEnabled) {
+            if (window.ambientGain) { window.ambientGain.gain.setValueAtTime(0, window.audioCtx.currentTime); }
+        } else {
+            if (!window.ambientOsc1) {
+                window.initAudio();
+            } else if (window.ambientGain) {
+                window.ambientGain.gain.setValueAtTime(0.04, window.audioCtx.currentTime);
+            }
+        }
         window.initAudio();
     });
 });
