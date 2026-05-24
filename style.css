@@ -28,7 +28,7 @@ body {
     overflow: hidden;
     transition: transform 0.05s linear; /* Smooth dynamic structural shake translations */
     will-change: transform;
-    transform-style: preserve-3d;
+    contain: layout;
 }
 canvas {
     display: block;
