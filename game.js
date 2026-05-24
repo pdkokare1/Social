@@ -65,6 +65,7 @@ const SKINS = [
 const cacheSkyColor = new THREE.Color();
 const cacheFogColor = new THREE.Color();
 const cacheGroundColor = new THREE.Color();
+const cacheSunColor = new THREE.Color(); // Extended cache hook for light morphs
 const lerpColor1 = new THREE.Color();
 const lerpColor2 = new THREE.Color();
 
@@ -528,10 +529,13 @@ function updateFixedPhysicsStep(fixedDelta) {
         
         window.playSynthSound('score');
         
+        // REFINED LIGHTING JUICE: Blend core sun directional light color and intensities alongside ambient biomes
         if(maxRowReached < 40) {
             cacheSkyColor.setHex(0xbce3fc);
             cacheFogColor.setHex(0xbce3fc);
             cacheGroundColor.setHex(0x96877b);
+            cacheSunColor.setHex(0xfffaee);
+            if (sunLight) sunLight.intensity = 0.8;
         } else if(maxRowReached < 90) {
             let factor = (maxRowReached - 40) / 50;
             lerpColor1.setHex(0xbce3fc); lerpColor2.setHex(0xfca15d);
@@ -539,6 +543,10 @@ function updateFixedPhysicsStep(fixedDelta) {
             cacheFogColor.copy(cacheSkyColor);
             lerpColor1.setHex(0x96877b); lerpColor2.setHex(0x705244);
             cacheGroundColor.copy(lerpColor1).lerp(lerpColor2, factor);
+            
+            lerpColor1.setHex(0xfffaee); lerpColor2.setHex(0xffd2a0);
+            cacheSunColor.copy(lerpColor1).lerp(lerpColor2, factor);
+            if (sunLight) sunLight.intensity = 0.8 - (factor * 0.2);
         } else if(maxRowReached < 140) {
             let factor = (maxRowReached - 90) / 50;
             lerpColor1.setHex(0xfca15d); lerpColor2.setHex(0x231a3a);
@@ -546,19 +554,45 @@ function updateFixedPhysicsStep(fixedDelta) {
             cacheFogColor.copy(cacheSkyColor);
             lerpColor1.setHex(0x705244); lerpColor2.setHex(0x2a1d40);
             cacheGroundColor.copy(lerpColor1).lerp(lerpColor2, factor);
+            
+            lerpColor1.setHex(0xffd2a0); lerpColor2.setHex(0x00f3ff);
+            cacheSunColor.copy(lerpColor1).lerp(lerpColor2, factor);
+            if (sunLight) sunLight.intensity = 0.6 - (factor * 0.45);
         } else {
             cacheSkyColor.setHex(0x0b0813);
             cacheFogColor.setHex(0x0b0813);
             cacheGroundColor.setHex(0x120a1c);
+            cacheSunColor.setHex(0x00f3ff);
+            if (sunLight) sunLight.intensity = 0.15;
         }
         scene.background = cacheSkyColor;
         if(scene.fog) scene.fog.color = cacheFogColor;
         if (hemiLight) hemiLight.groundColor = cacheGroundColor;
+        if (sunLight) sunLight.color = cacheSunColor;
+    }
+
+    // STAR COIN INTERACTION CAPTURE: Structural collision cross-checks for stepping on grid-aligned coin coordinates
+    if (playerMesh && !isJumping) {
+        const checkKey = `${playerGridX - window.START_COL}_${playerGridZ}`;
+        if (window.activeStarCoins && window.activeStarCoins[checkKey]) {
+            const targetedCoin = window.activeStarCoins[checkKey];
+            if (targetedCoin.parent) targetedCoin.parent.remove(targetedCoin);
+            delete window.activeStarCoins[checkKey];
+            
+            window.playSynthSound('coin');
+            window.spawnFloatingIndicator('+1 ⭐', '#ffd700');
+            
+            let totalSavedCoins = parseInt(localStorage.getItem('iso_hop_star_coins')) || 0;
+            localStorage.setItem('iso_hop_star_coins', totalSavedCoins + 1);
+        }
     }
 
     const minZ = Math.max(0, playerGridZ - 6);
     const maxZ = playerGridZ + 14;
     const currentCenterX = playerMesh ? Math.round(playerMesh.position.x) : 0;
+
+    // Polish Addition: Reset background audio filter parameters to standard profile
+    let hasActiveRailwayHazard = false;
 
     for (let z = minZ; z <= maxZ; z++) {
         const lane = lanes[z];
@@ -670,6 +704,9 @@ function updateFixedPhysicsStep(fixedDelta) {
                 if (lane.warningTimer > 0) {
                     lane.warningTimer -= speedModifier;
                     
+                    // THREAT HAZARD NOTIFICATION: Register active hazard countdown state
+                    hasActiveRailwayHazard = true;
+
                     if (Math.floor(lane.warningTimer) % 15 === 0) {
                         window.playSynthSound('warning');
                     }
@@ -705,6 +742,18 @@ function updateFixedPhysicsStep(fixedDelta) {
                     if(lane.signalLight) lane.signalLight.material = window.matSignalGreen;
                     if(lane.gateArm) lane.gateArm.rotation.z = 0;
                 }
+            }
+        }
+    }
+
+    // AUDIO CONTEXT MODULATION OVERLAY: Adapt filter layers based on near-miss threats
+    if (window.updateAmbientFilters) {
+        if (hasActiveRailwayHazard) {
+            window.updateAmbientFilters('hazard');
+        } else {
+            const currentLaneType = lanes[playerGridZ]?.type || 'grass';
+            if (currentLaneType !== 'river' || isJumping) {
+                window.updateAmbientFilters('normal');
             }
         }
     }
@@ -773,11 +822,6 @@ function updateGameLogic(delta) {
         camera.position.x += ((playerMesh.position.x + 8.5) - camera.position.x) * 0.08 * speedModifier;
         camera.position.z += ((playerMesh.position.z + 8.5) - camera.position.z) * 0.08 * speedModifier;
     }
-
-    // Polish Addition: Reset background audio filter parameters to standard profile
-    if (window.updateAmbientFilters) {
-        window.updateAmbientFilters('normal');
-    }
 }
 
 function animate() {
@@ -820,6 +864,8 @@ function purgeSceneObjects() {
         if (lane.gateArm) scene.remove(lane.gateArm);
     });
     window.lanes = lanes = {}; window.particles = particles = [];
+    window.riverWaterMeshes = [];
+    window.activeStarCoins = {};
     inputBuffer = null;
 }
 
@@ -866,6 +912,7 @@ function startRunCycle() {
     scene.background = new THREE.Color(0xbce3fc);
     if(scene.fog) scene.fog.color = new THREE.Color(0xbce3fc);
     if (hemiLight) hemiLight.groundColor = new THREE.Color(0x96877b);
+    if (sunLight) { sunLight.color = new THREE.Color(0xfffaee); sunLight.intensity = 0.8; }
 
     updateActiveViewportLanes(0);
 
