@@ -126,7 +126,9 @@ function initEngine() {
 
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: "high-performance" });
     if (container) renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    // UNLOCKED PIXEL RATIO: Capping removed to activate beautiful native resolution on high-DPI smartphone screen arrays
+    renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -143,9 +145,9 @@ function initEngine() {
     sunLight.shadow.mapSize.width = 1024; 
     sunLight.shadow.mapSize.height = 1024;
     
-    // BIAS MODIFICATIONS: Offset properties optimized to terminate shadow acne artifacts on mobile
-    sunLight.shadow.bias = -0.0002;
-    sunLight.shadow.normalBias = 0.02;
+    // PRECISION ADJUSTMENTS: Optimized offsets eliminate surface acne shadow lines on mobile browsers completely
+    sunLight.shadow.bias = -0.0004;
+    sunLight.shadow.normalBias = 0.05;
     
     scene.add(sunLight);
 
@@ -289,7 +291,6 @@ function setupInputSystems() {
 function queueMove(dx, dz) {
     if (gameState !== 'PLAYING' || isShattered) return;
     
-    /* EXPERIMENTAL KINEMATICS: Trigger anticipatory squish-flatten frame right on keystroke down */
     squishX = 1.35; squishY = 0.45; squishZ = 1.35;
     if (chickenCoreGroup) chickenCoreGroup.scale.set(squishX, squishY, squishZ);
 
@@ -372,7 +373,6 @@ function processInputQueue() {
     
     window.playSynthSound('jump');
 
-    /* POLISH ADDITION: Generate ghost blur footprint shadows if running on maximum streak rates */
     if (currentComboMultiplier >= 3) {
         spawnGhostTrailEcho();
     }
