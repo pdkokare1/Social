@@ -17,7 +17,6 @@ window.matLily = new THREE.MeshStandardMaterial({ color: 0x298a4e, roughness: 0.
 window.matTreeLeaves = new THREE.MeshStandardMaterial({ color: 0x1b612c, roughness: 0.65, flatShading: true });
 window.matTreeLeavesLight = new THREE.MeshStandardMaterial({ color: 0x247c3a, roughness: 0.65, flatShading: true });
 window.matTrunk = new THREE.MeshStandardMaterial({ color: 0x452815, roughness: 0.9, flatShading: true });
-window.matTrunk = new THREE.MeshStandardMaterial({ color: 0x452815, roughness: 0.9, flatShading: true });
 window.matLog = new THREE.MeshStandardMaterial({ color: 0x61391e, roughness: 0.85, flatShading: true });
 window.matRock = new THREE.MeshStandardMaterial({ color: 0x7c8491, roughness: 0.8, metalness: 0.2, flatShading: true });
 window.matRockDark = new THREE.MeshStandardMaterial({ color: 0x5d636e, roughness: 0.8, metalness: 0.2, flatShading: true });
@@ -49,7 +48,7 @@ window.matWinPool = new THREE.MeshBasicMaterial({ color: 0x222b35 });
 window.matWinFrontPool = new THREE.MeshBasicMaterial({ color: 0xccf5ff });
 window.matParticleBase = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 });
 
-// Neon Projection Volumetric Visual Presets - Removed invalid flatShading property
+// Neon Projection Volumetric Visual Presets
 window.matHeadlightCone = new THREE.MeshBasicMaterial({ color: 0xfffde0, transparent: true, opacity: 0.15 });
 
 // Polish Addition: Dynamic material handles to track procedural swaying structures
@@ -195,8 +194,9 @@ window.generateLane = function(z) {
         let lineMat = biome === 'cyber' ? window.matGridNeonPink : window.matWhiteMarking;
         for (let i = -60; i < 60; i += 4) {
             const mark = new THREE.Mesh(window.boxGeo, lineMat);
-            mark.scale.set(0.5, 0.015, 0.06);
-            mark.position.set(i, 0.01, z);
+            // Height micro-offset to eliminate z-fighting pixelation
+            mark.scale.set(0.5, 0.02, 0.06);
+            mark.position.set(i, 0.011, z);
             laneObj.markingGroup.add(mark);
         }
 
@@ -209,7 +209,6 @@ window.generateLane = function(z) {
         laneObj.mesh.receiveShadow = true;
         window.scene.add(laneObj.mesh);
 
-        // Track water geometry context cleanly for liquid waving translations
         window.riverWaterMeshes.push(laneObj.mesh);
 
         laneObj.foamGroup = new THREE.Group();
@@ -220,8 +219,9 @@ window.generateLane = function(z) {
         let darkBand = biome === 'cyber' ? window.matGridNeonBlue : window.matWaterDark;
         for(let i = -60; i < 60; i += 8) {
             const band = new THREE.Mesh(window.boxGeo, darkBand);
+            // Height micro-offset to eliminate z-fighting pixelation
             band.scale.set(4.0, 0.02, biome === 'cyber' ? 0.05 : 1.002);
-            band.position.set(i + (Math.random() * 2), biome === 'cyber' ? 0.01 : -0.19, z);
+            band.position.set(i + (Math.random() * 2), biome === 'cyber' ? 0.011 : -0.13, z);
             laneObj.foamGroup.add(band);
         }
 
@@ -229,12 +229,12 @@ window.generateLane = function(z) {
             if(Math.random() > 0.4 && biome !== 'cyber') {
                 const lily = new THREE.Mesh(window.boxGeo, window.matLily);
                 lily.scale.set(0.4, 0.02, 0.4);
-                lily.position.set(i + (Math.random() * 3), -0.18, z + (Math.random() - 0.5) * 0.4);
+                lily.position.set(i + (Math.random() * 3), -0.12, z + (Math.random() - 0.5) * 0.4);
                 laneObj.foamGroup.add(lily);
                 
                 laneObj.lilies.push({
                     mesh: lily,
-                    initialY: -0.18,
+                    initialY: -0.12,
                     sinkProgress: 0,
                     isStepped: false
                 });
@@ -250,7 +250,7 @@ window.generateLane = function(z) {
             for (let i = -3; i < 4; i++) {
                 const foam = new THREE.Mesh(window.boxGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2 }));
                 foam.scale.set(1.6, 0.01, 0.8);
-                foam.position.set(i * 8, -0.18, z);
+                foam.position.set(i * 8, -0.12, z);
                 laneObj.foamGroup.add(foam);
             }
         }
@@ -313,7 +313,6 @@ window.generateLane = function(z) {
         window.ensureObstaclesGeneratedForRange(laneObj, z, window.playerGridX - 35, window.playerGridX + 35);
     }
 
-    // Polish Addition: Ambiently roll tumbleweed particles down newly formed sand biomes
     if (biome === 'desert' && Math.random() < 0.25) {
         const twMesh = new THREE.Mesh(window.boxGeo, window.matTumbleweed);
         twMesh.scale.set(0.25, 0.25, 0.25);
@@ -326,7 +325,6 @@ window.generateLane = function(z) {
 };
 
 window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
-    // CRITICAL FIX: Gracefully exit if the requested viewport lane or its active graphics group isn't initialized yet
     if (!lane || !lane.visualGroup) return;
     if (!lane.obstacles) lane.obstacles = {};
     const biome = window.getBiomeType(z);
@@ -431,7 +429,6 @@ window.ensureObstaclesGeneratedForRange = function(lane, z, minX, maxX) {
             flowerGroup.name = "flower";
             lane.visualGroup.add(flowerGroup);
         } else if (itemRand > 0.90 && (lane.type === 'grass' || lane.type === '')) {
-            // META PROGRESSION UPGRADE: Procedural generation of 3D star coins on unoccupied paths
             const coinX = c - window.START_COL;
             const coinKey = `${coinX}_${z}`;
             
@@ -517,7 +514,6 @@ window.createHighDetailVehicle = function(profile, direction) {
     const hlR = hlL.clone(); hlR.position.z = -0.24;
     vehicle.add(hlL, hlR);
 
-    // Volumetric Dynamic Headlight Rays during evening/dusk gameplay
     if (window.maxRowReached >= 40) {
         const rayCone = new THREE.Mesh(window.boxGeo, window.matHeadlightCone);
         rayCone.scale.set(2.4, 0.02, 0.65);
